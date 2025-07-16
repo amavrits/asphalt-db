@@ -142,7 +142,7 @@ def make_plot(ax, sheet, originele_data, xmean, ymean, final_line, gecorrigeerde
     ax.grid(alpha=0.5)
     
     
-def analyse_sheet(ax, file_path, sheet):
+def plot_graph(ax, file_path, sheet):
     originele_data, D, h, strength = read_data(file_path, sheet)
     xmean = originele_data['Verplaatsing'].rolling(8).mean()
     ymean = originele_data['Kracht'].rolling(8).mean()
@@ -165,7 +165,7 @@ def make_table(file_path, grafiektitel):
     rek_lijst = []
     vormfactor_lijst = []
     
-    f = pd.ExcelFile(file_path, engine="xlrd")
+    f = pd.ExcelFile(file_path)
     alle_sheets = f.sheet_names
     sheetnames = alle_sheets[3:] #vanaf sheet index 3
     

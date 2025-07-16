@@ -16,7 +16,7 @@ def read_data(file_path, sheet):
     h = pd.to_numeric(values.iloc[5, 2], errors='coerce') / 1000
     strength = pd.to_numeric(values.iloc[7, 7], errors='coerce')
     
-    data = pd.read_excel(file_path, sheet_name=sheet, skiprows=16, engine="xlrd")
+    data = pd.read_excel(file_path, sheet_name=sheet, skiprows=16)
     data = data[['Verplaatsing', 'Kracht']].copy()
     data['Verplaatsing'] = pd.to_numeric(data['Verplaatsing'], errors='coerce')
     data['Kracht'] = pd.to_numeric(data['Kracht'], errors='coerce')
