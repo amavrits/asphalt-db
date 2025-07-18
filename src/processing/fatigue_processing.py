@@ -2,7 +2,7 @@
 import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
-from twdm import tqdm
+#from twdm import tqdm
 
 
 def calc_permanent_strain (filename, sheetname):

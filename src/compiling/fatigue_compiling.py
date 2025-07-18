@@ -2,7 +2,7 @@
 import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
-from twdm import tqdm
+#from twdm import tqdm
 from sqlalchemy import create_engine
 from sqlalchemy.types import Float, String, Integer
 
@@ -18,7 +18,7 @@ f = pd.ExcelFile(filename)
 alle_sheets = f.sheet_names
 sheetname = alle_sheets[3:] #vanaf sheet index 4
 
-def Data_Toevoegen_PostgreSQL(filename, sheet):
+def data_toevoegen_samenvatting(filename, sheet):
     sheet_lijst = []
     fasehoek_lijst = []
     permanente_rek_lijst = []
@@ -43,7 +43,7 @@ def Data_Toevoegen_PostgreSQL(filename, sheet):
         Spanning_P_lijst.append(Spanning_P)
         Stijfheid_lijst.append(Stijfheid)
         Nfat_lijst.append(Nfat)
-
+        
     resultaten_df = pd.DataFrame({
         'Sheetnaam': sheet_lijst,
         'Fasehoek [°]': fasehoek_lijst,
@@ -53,22 +53,8 @@ def Data_Toevoegen_PostgreSQL(filename, sheet):
         'Stijfheid [MPa]': Stijfheid_lijst,
         'N_fat [-]': Nfat_lijst
     })
-    tabel = resultaten_df.sort_values(by='Sheetnaam', ascending=True)
-    print (tabel)
-
-    # Save to PostgreSQL
-    engine = create_engine(db_url)
-    tabel.to_sql('resultaten_vermoeiing', con=engine, if_exists='replace', index=False, dtype={
-        'Sheetnaam': String(),
-        'Fasehoek [°]': Float(),
-        'Permanente Rek [µm/m]': Float(),
-        'Cyclische Spanning [MPa]': Float(),
-        'Permanente Spanning [MPa]': Float(),
-        'Stijfheid [MPa]': Float(),
-        'N_fat [-]': Integer()
-    })
-    return
-
-if __name__ == "__main__":
+    tabel_samenvatting_data = resultaten_df.sort_values(by='Sheetnaam', ascending=True)
+    print (tabel_samenvatting_data)
     
-    pass
+
+data_toevoegen_samenvatting (filename, sheetname)
