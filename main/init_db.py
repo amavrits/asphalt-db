@@ -1,5 +1,5 @@
 import psycopg
-from src.building.schema import create_tables, create_database_if_not_exists
+from src.db_builder.schema import create_tables, create_database_if_not_exists
 from config import DB_CONFIG
 
 

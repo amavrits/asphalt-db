@@ -1,4 +1,4 @@
-from src.building.utils import *
+from src.db_builder.utils import *
 
 
 def create_tables():
