@@ -127,26 +127,25 @@ class FtgSampleSummarized(BaseModel):
     N_fat = IntegerField(null=True)    # fatigue life (cycle count)
 
 class StfSampleRaw(BaseModel):
-    borehole = ForeignKeyField(Borehole, backref='samples', null=True)
+    borehole = ForeignKeyField(Borehole, backref='stf_samples', null=True)
     sample_name = CharField()
     collection_date = DateField(null=True)
     depth = FloatField(null=True)
     notes = TextField(null=True)
 
-class StfSampleProcessed(BaseModel):
-    sample_raw = ForeignKeyField(StfSampleRaw, backref='processed_samples', null=True)
-    sample_name = CharField()
-    collection_date = DateField(null=True)
-    depth = FloatField(null=True)
-    notes = TextField(null=True)
+    # STF raw test fields
+    T = FloatField(null=True)         # Temperature (assumed)
+    f = FloatField(null=True)         # Frequency
+    eps = FloatField(null=True)       # Strain
+    E_dyn = FloatField(null=True)     # Dynamic modulus
+    pha = FloatField(null=True)       # Phase angle
 
 class StfSampleSummarized(BaseModel):
-    sample_raw = ForeignKeyField(StfSampleProcessed, backref='summarized_samples', null=True)
+    sample_raw = ForeignKeyField(StfSampleProcessed, backref='StfSampleRaw', null=True)
     sample_name = CharField()
     collection_date = DateField(null=True)
-    depth = FloatField(null=True)
-    notes = TextField(null=True)
-    
+    E_dyn = FloatField(null=True)
+
     
 if __name__ == "__main__":
 

@@ -14,5 +14,11 @@
     "InPhaseModulus",
     "OutPhaseModulus"
   ],
-  "stf": ["A", "B", "C"]
+  "stf": [
+    "T",
+    "f",
+    "eps",
+    "E_dyn",
+    "pha"
+  ]
 }
