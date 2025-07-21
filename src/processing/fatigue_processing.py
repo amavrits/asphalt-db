@@ -15,12 +15,13 @@ def calc_permanent_strain (filename, sheetname):
     kolom = df.iloc[:,5]
     kolom_numeric = pd.to_numeric(kolom, errors='coerce').dropna()
     if len(kolom_numeric) >= 2:
-        permanente_rek = kolom_numeric.iloc[-2]
-        print(f'{sheetname}: Permanente Rek = {permanente_rek} [mm/m]')
+        sig_perm = kolom_numeric.iloc[-2]
+        print(f'{sheetname}: sig_perm = {sig_perm}')
     else:
         print(f'{sheetname}: Niet genoeg data voor Permanente Rek.')
-    return permanente_rek
+    return sig_perm
 
 if __name__ == "__main__":
     
     pass
+
