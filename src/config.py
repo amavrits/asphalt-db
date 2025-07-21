@@ -7,7 +7,7 @@ dotenv_path = SCRIPT_DIR.parent / ".env"
 load_dotenv(dotenv_path)
 
 DB_CONFIG = {
-    "dbname": os.getenv("DB_NAME"),
+    "database": os.getenv("DB_NAME"),
     "user": os.getenv("DB_USER"),
     "password": os.getenv("DB_PASSWORD"),
 }

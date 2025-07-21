@@ -1,0 +1,18 @@
+{
+  "str": [
+    "t",
+    "F",
+    "V_org"
+  ],
+  "ftg": [
+    "N",
+    "MaximumStroke",
+    "MinimumStroke",
+    "PeakToPeakStroke",
+    "MaximumLoad",
+    "PeakToPeakLoad",
+    "InPhaseModulus",
+    "OutPhaseModulus"
+  ],
+  "stf": ["A", "B", "C"]
+}

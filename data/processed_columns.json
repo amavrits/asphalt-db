@@ -1,0 +1,19 @@
+{
+  "str": [
+    "F",
+    "V_cor",
+    "eps",
+    "sig",
+    "Sec"
+  ],
+  "ftg": [
+    "N",
+    "eps_cycl",
+    "eps_perm",
+    "sig_cyc",
+    "sig_perm",
+    "E_dyn",
+    "pha"
+  ],
+  "stf": ["A", "B", "C"]
+}

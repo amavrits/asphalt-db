@@ -1,5 +1,4 @@
-from src.parsing.parse import parse_file
-from config import DB_CONFIG
+from src.config import DB_CONFIG
 import psycopg
 
 
