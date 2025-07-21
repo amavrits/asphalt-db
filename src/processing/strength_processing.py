@@ -143,7 +143,7 @@ def make_plot(ax, sheet, originele_data, xmean, ymean, final_line, gecorrigeerde
     
     
 def plot_graph(ax, file_path, sheet):
-    originele_data, D, h, strength = read_data(file_path, sheet)
+    originele_data, D, h, strength, raw_data = read_data(file_path, sheet)
     xmean = originele_data['Verplaatsing'].rolling(8).mean()
     ymean = originele_data['Kracht'].rolling(8).mean()
     max_index = ymean.idxmax()
@@ -160,9 +160,16 @@ def plot_graph(ax, file_path, sheet):
     
 def make_table(file_path, grafiektitel):
     sheet_lijst = []
+    HR_lijst = []
+    v_lijst = []
     buigtreksterkte_lijst = []
     breukenergie_lijst = []
     rek_lijst = []
+    sec10_lijst = []
+    sec50_lijst = []
+    sec100_lijst = []
+    Gc_rek_lijst = []
+    Gc_rek_sig_lijst = []
     vormfactor_lijst = []
     
     f = pd.ExcelFile(file_path)
@@ -170,7 +177,7 @@ def make_table(file_path, grafiektitel):
     sheetnames = alle_sheets[3:] #vanaf sheet index 3
     
     for i, sheet in enumerate(sheetnames):
-        originele_data, D, h, buigtreksterkte = read_data(file_path, sheet)
+        originele_data, D, h, buigtreksterkte, raw_data = read_data(file_path, sheet)
         xmean = originele_data['Verplaatsing'].rolling(8).mean()
         ymean = originele_data['Kracht'].rolling(8).mean()
         max_index = ymean.idxmax()
@@ -186,17 +193,93 @@ def make_table(file_path, grafiektitel):
         rek_lijst.append(rek_max)
         vormfactor_lijst.append(vormfactor)
         buigtreksterkte_lijst.append(buigtreksterkte)
+        Gc_rek_lijst.append(Gc / rek_max)
+        Gc_rek_sig_lijst.append(Gc / (rek_max * buigtreksterkte))
 
 
     resultaten_df = pd.DataFrame({
     'Sheetnaam': sheet_lijst,
+    # 'HR': HR_lijst,
+    # 'v': v_lijst,
     'Buigtreksterkte [MPa]': buigtreksterkte_lijst,
     'Breukenergie [J/m2]': breukenergie_lijst,
     'Rek Bij Breuk [µm/m]': rek_lijst,
+    'Gc/eb': Gc_rek_lijst,
+    'Gc/(eb*ob)': Gc_rek_sig_lijst,
     'Vormfactor [-]': vormfactor_lijst})
     tabel= resultaten_df.sort_values(by='Sheetnaam',ascending=True)
     print(tabel)  
     #tabel.to_excel('Resultaten 3PB 25_32.xlsx')
     return
+
+def make_table_raw_data(file_path, grafiektitel):
+    f = pd.ExcelFile(file_path)
+    alle_sheets = f.sheet_names
+    sheetnames = alle_sheets[3:]  # vanaf sheet index 3
+
+    # Dictionary om DataFrames per sheetnaam op te slaan
+    dataframes_per_sheet = {}
+
+    for sheet in sheetnames:
+        originele_data, D, h, buigtreksterkte, raw_data = read_data(file_path, sheet)
+
+        # Maak een dataframe voor deze sheet
+        df = pd.DataFrame({
+            't': raw_data['tijd'],
+            'F': raw_data['kracht'],
+            'V_org': raw_data['verplaatsing']
+        })
+
+        # Voeg toe aan dictionary met sheetnaam als key
+        dataframes_per_sheet[sheet] = df
+
+    # Voorbeeld: print eerste paar rijen van elke sheet
+    for naam, df in dataframes_per_sheet.items():
+        print(f"Sheet: {naam}")
+        print(df.head(), "\n")
+
+    return dataframes_per_sheet
+
+def make_table_processed_data(file_path, grafiektitel, sheet):
+    f = pd.ExcelFile(file_path)
+    alle_sheets = f.sheet_names
+    sheetnames = alle_sheets[3:]  # vanaf sheet index 3
+    
+     
+
+    # Dictionary om DataFrames per sheetnaam op te slaan
+    dataframes_per_sheet = {}
+
+    for sheet in sheetnames:
+        originele_data, D, h, strength, raw_data = read_data(file_path, sheet)
+        xmean = originele_data['Verplaatsing'].rolling(8).mean()
+        ymean = originele_data['Kracht'].rolling(8).mean()
+        max_index = ymean.idxmax()
+        final_line, rc, intercept, _ = calc_linear_fit(xmean, ymean, max_index)
+
+        gecorrigeerde_data = originele_data.copy()
+        gecorrigeerde_data = correct_data(gecorrigeerde_data, rc, intercept)
+        verplaatsing_corr = gecorrigeerde_data['Verplaatsing']
+
+        # Maak een dataframe voor deze sheet
+        df = pd.DataFrame({
+            'F': gecorrigeerde_data['Kracht'],
+            'V_cor': verplaatsing_corr,
+            'eps': raw_data['rek'],
+            'sig': raw_data['spanning'],
+            'Sec': raw_data['secantmodulus']
+        })
+
+        # Voeg toe aan dictionary met sheetnaam als key
+        dataframes_per_sheet[sheet] = df
+
+    # Voorbeeld: print eerste paar rijen van elke sheet
+    for naam, df in dataframes_per_sheet.items():
+        print(f"Sheet: {naam}")
+        print(df.head(), "\n")
+
+    return dataframes_per_sheet
+    
+
 
     
