@@ -42,9 +42,10 @@ def create_tables(db):
         GeneralData,
         StrSampleRaw,
         StrSampleProcessed,
+        StrSampleSummary,
         FtgSampleRaw,
         FtgSampleProcessed,
-        EdynSampleRaw
+        EdynSampleRaw,
     ],
         safe=True)
 
@@ -58,6 +59,7 @@ def create_tables(db):
         GeneralData,
         StrSampleRaw,
         StrSampleProcessed,
+        StrSampleSummary,
         FtgSampleRaw,
         FtgSampleProcessed,
         EdynSampleRaw
@@ -298,6 +300,36 @@ def add_str_processed(test_name, sample_name, borehole_name, project_name, maste
     )
 
 
+def add_str_summarized(test_name, sample_name, borehole_name, project_name, master_table, test_data):
+
+    cond = (master_table["project"] == project_name) & (master_table["borehole"] == borehole_name)
+    dike_name = master_table.loc[cond, "dike"].item()
+
+    StrSampleSummary.create(
+        sample_name=sample_name,
+        sample_processed=StrSampleProcessed.get(
+            sample_name=sample_name,
+            sample_raw=StrSampleRaw(
+                sample_name=sample_name,
+                test=Test.get(
+                    test_name=test_name,
+                    sample=Sample.get(
+                        sample_name=sample_name,
+                        borehole=Borehole.get(
+                            borehole_name=borehole_name,
+                            project_dike=ProjectDike.get(
+                                project=Project.get(project_name=project_name),
+                                dike=Dike.get(dike_name=dike_name)
+                            )
+                        )
+                    )
+                )
+            )
+        ),
+        str=test_data["str"]
+    )
+
+
 def add_ftg_processed(test_name, sample_name, borehole_name, project_name, master_table, test_data):
 
     cond = (master_table["project"] == project_name) & (master_table["borehole"] == borehole_name)
@@ -364,6 +396,9 @@ def add_samples(borehole_name, project_name, master_table, test_folder, data_typ
                 add_str_raw(test_name, sample_name, borehole_name, project_name, master_table, data)
             elif data_type == "processed":
                 add_str_processed(test_name, sample_name, borehole_name, project_name, master_table, data)
+            elif data_type == "processed":
+                # add_str_summarized(test_name, sample_name, borehole_name, project_name, master_table, data)
+                pass
             else:
                 raise ValueError(f"Unknown data type: {data_type}")
 

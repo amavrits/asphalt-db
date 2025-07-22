@@ -75,6 +75,12 @@ class StrSampleProcessed(BaseModel):
     sig = FloatField(null=True)       # stress
     Sec = FloatField(null=True)       # secant modulus
 
+class StrSampleSummary(Model):
+    sample_processed = ForeignKeyField(StrSampleProcessed, backref='summarized_samples', null=True)
+    sample_name = CharField()
+    str = FloatField()
+
+
 # class StrSampleSummarized(BaseModel):
 #     sample_processed = ForeignKeyField(StrSampleProcessed, backref='summarized_samples', null=True)
 #     sample_name = CharField()
@@ -158,7 +164,7 @@ class EdynSampleRaw(BaseModel):
 #     collection_date = DateField(null=True)
 #     E_dyn = FloatField(null=True)
 
-    
+
 if __name__ == "__main__":
 
     pass
