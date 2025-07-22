@@ -24,9 +24,6 @@ if __name__ == "__main__":
     df[["date", "collection_date"]] = datetime.utcnow()
 
 
-
-
-
     # -----------------------
     # Step 1: Create the database if it doesn't exist
     # -----------------------
@@ -85,7 +82,6 @@ if __name__ == "__main__":
         dike, _ = Dike.get_or_create(dike_name=dike_name)
         project, _ = Project.get_or_create(project_name=project_name)
         ProjectDike.get_or_create(dike=dike, project=project)
-
     
     borehole_df = df.drop_duplicates(subset=["borehole_name", "dike_name", "project_name"])
     for i, row in borehole_df.iterrows():
@@ -101,7 +97,6 @@ if __name__ == "__main__":
             Y_coord=row["Y_coord"],
             notes=row["notes"],
         )
-
 
     sample_df = df.drop_duplicates(subset=["sample_name", "borehole_name", "dike_name", "project_name"])
     for i, row in sample_df.iterrows():
