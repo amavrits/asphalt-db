@@ -3,6 +3,7 @@ import pandas as pd
 from src.config import DB_CONFIG
 from src.db_builder.models import *
 from src.db_builder.build import *
+from src.db_builder.utils import *
 from pathlib import Path
 from dotenv import load_dotenv
 import json
@@ -16,54 +17,14 @@ if __name__ == "__main__":
 
     SCRIPT_DIR = Path(__file__).parent
     data_path = SCRIPT_DIR.parent / "data/dummy"
-    dotenv_path = SCRIPT_DIR.parent / ".env"
-    load_dotenv(dotenv_path)
 
-    dike_table = pd.read_csv(data_path/"dike_table.csv", index_col="dike_name")
-    project_table = pd.read_csv(data_path/"project_table.csv", index_col="project_name")
-    master_table = pd.read_csv(data_path/"master_table.csv")
-    general_data = pd.read_csv(data_path/"general_data.csv")
-
-    # -----------------------
-    # Step 1: Create the database if it doesn't exist
-    # -----------------------
+    dike_table, project_table, master_table, general_data = parse_base_data(data_path)
 
     create_db(DB_CONFIG)
 
-    # -----------------------
-    # Step 2: Create table and populate data
-    # -----------------------
-
     db.connect()
 
-    db.drop_tables([
-        Dike,
-        Project,
-        ProjectDike,
-        Borehole,
-        Sample,
-        Test,
-        GeneralData,
-        StrSampleRaw,
-        FtgSampleRaw,
-        EdynSampleRaw
-    ],
-        safe=True)
-
-    db.create_tables([
-        Dike,
-        Project,
-        ProjectDike,
-        Borehole,
-        Sample,
-        Test,
-        GeneralData,
-        StrSampleRaw,
-        FtgSampleRaw,
-        EdynSampleRaw
-    ],
-        safe=True)
-
+    create_tables(db)
 
     for project_folder in data_path.iterdir():
 
@@ -73,29 +34,9 @@ if __name__ == "__main__":
         project_name = project_folder.stem
 
         project_data = project_table.loc[project_name, :]
+        add_project(project_name, project_data)
 
-        project_master_table = master_table.loc[master_table["project"] == project_name]
-
-        Project.get_or_create(
-            project_name=project_name,
-            project_code=project_data["project_code"],
-            date=project_data["date"],
-            notes=project_data["notes"]
-        )
-
-        dike_names = project_master_table["dike"].tolist()
-
-        for dike_name in dike_names:
-            Dike(
-                dike_name=dike_name,
-                waterboard=dike_table.loc[dike_name, "waterboard"],
-                notes=dike_table.loc[dike_name, "notes"]
-            )
-
-            ProjectDike(
-                dike=Dike(dike_name=dike_name),
-                project=Project(project_name=project_name)
-            )
+        iter_dikes(project_name, master_table, dike_table)
 
         for borehole_folder in project_folder.iterdir():
 
@@ -107,39 +48,18 @@ if __name__ == "__main__":
             with open(borehole_folder/"borehole_data.json", "r") as f:
                 borehole_data = json.load(f)
 
-            Borehole(
-                borehole_name=borehole_name,
-                project_dike=ProjectDike(
-                    dike=Dike(dike_name=dike_name),
-                    project=Project(project_name=project_name)
-                ),
-                collection_date=borehole_data["collection_date"],
-                X_coord=borehole_data["X_coord"],
-                Y_coord=borehole_data["Y_coord"],
-                notes=borehole_data["notes"]
-            )
+            add_borehole(borehole_name, project_name, master_table, borehole_data)
 
             with open(borehole_folder / "sample_data.json", "r") as f:
                 sample_data = json.load(f)
 
             for (sample_name, data) in sample_data.items():
 
-                Sample(
-                    borehole=Borehole(borehole_name=borehole_name),
-                    sample_name=sample_name,
-                    depth=data["depth"],
-                    notes=data["notes"]
-                )
+                add_sample(sample_name, borehole_name, data)
 
-                cond = (general_data["project"] == project_name) & \
-                       (general_data["borehole"] == borehole_name) & \
-                       (general_data["sample"] == sample_name)
-                general_data_sample = general_data.loc[cond, :]
+                add_sample_general_data(sample_name, borehole_name, project_name, general_data)
 
-                GeneralData(
-                    sample=Sample(sample_name=sample_name),
-                    e=general_data_sample["e"]
-                )
+                add_sample_test()
 
                 test_name = f"T_{sample_name}"
                 test_folder_list = [file for file in borehole_folder.iterdir() if file.name.split(".")[-1] != "json"]
