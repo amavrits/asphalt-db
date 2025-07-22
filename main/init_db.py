@@ -49,19 +49,19 @@ if __name__ == "__main__":
 
             for (sample_name, data) in sample_data.items():
 
-                add_sample(sample_name, borehole_name, data)
+                add_sample(sample_name, borehole_name, project_name, master_table, data)
 
-                add_sample_general_data(sample_name, borehole_name, project_name, general_data)
+                add_sample_general_data(sample_name, borehole_name, project_name, master_table, general_data)
 
                 test_name = f"T_{sample_name}"
-                add_sample_test(test_name, sample_name, borehole_folder)
+                add_sample_test(test_name, sample_name, borehole_name, project_name, master_table, borehole_folder)
 
             test_folder_list = [file for file in borehole_folder.iterdir() if file.name.split(".")[-1] != "json"]
 
             for test_folder in test_folder_list:
 
                 for data_type in ["raw", "processed"]:
-                    add_samples(test_name, test_folder, data_type)
+                    add_samples(borehole_name, project_name, master_table, test_folder, data_type)
 
     db.close()
 
