@@ -13,9 +13,7 @@ warnings.filterwarnings("ignore")
 #from twdm import tqdm
 
 from src.parsing.strength_parsing import read_data
-from src.processing.strength_processing import plot_graph, make_table, make_table_raw_data, make_table_processed_data
-
-
+from src.processing.strength_processing import plot_graph, make_table_summary_data, make_table_raw_data, make_table_processed_data
 
 
 #INVOER
@@ -59,9 +57,10 @@ sheetnames = alle_sheets[3:]
 
 for i, sheet in enumerate(sheetnames):
     plot_graph(axs[i], file_path, sheet)
-    
+
+make_table_raw_data(file_path, grafiektitel)    
 make_table_processed_data(file_path, grafiektitel, sheetnames)    
-make_table(file_path, grafiektitel)
+make_table_summary_data(file_path, grafiektitel)
 
 
 plt.suptitle(grafiektitel, fontsize=15)

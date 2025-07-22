@@ -12,7 +12,7 @@ warnings.filterwarnings("ignore")
 #from twdm import tqdm
 from scipy.signal import find_peaks
 from scipy.interpolate import interp1d
-from src.parsing.strength_parsing import read_data
+from src.parsing.strength_parsing import read_data, read_parameters
 
 
 def calc_linear_fit(xmean, ymean, max_index):
@@ -118,6 +118,34 @@ def calc_fracture_data(data, D, h):
     vormfactor = (area - (0.5 * x_max * y_max)) / (0.5 * x_max * y_max)
     
     return rek_max, x_max, y_max, x_interp, y_interp, Gc, vormfactor
+
+
+def define_sec_modulus(file_path, sheet, data, D, h):
+    # Rek berekenen (veronderstelde formule)
+    rek = 10**6 * (12 * h * 1000) / (2 * 200**2) * (data['Verplaatsing'] - data['Verplaatsing'].iloc[0])    
+    
+    raw_data = read_data(file_path, sheet)[1]
+    process_data = data
+    process_data['tijd'] = raw_data['tijd']
+    process_data['rek'] = rek
+    process_data['spanning'] = (1.5 * data['Kracht'] * 1000 * 200) / (h * 1000 * (D * 1000)**2)
+    process_data['secantmodulus'] = process_data['spanning'] * 10**6 / process_data['rek']
+    process_data = process_data.dropna()
+        
+    x = process_data['Verplaatsing']
+    y = process_data['Kracht']
+    
+    # Vind pieken in kracht
+    peaks, _ = find_peaks(y)
+    max_index = peaks[y.iloc[peaks].argmax()]
+    x_max = x.iloc[max_index]
+    
+    process_data['% verplaatsing'] = process_data['Verplaatsing'] / x_max
+    
+    idx10, idx50, idx100 = np.abs(process_data['% verplaatsing'] - 0.1).idxmin(), np.abs(process_data['% verplaatsing'] - 0.5).idxmin(), np.abs(process_data['% verplaatsing'] - 1).idxmin()
+    sec_10, sec_50, sec_100 = process_data['secantmodulus'].loc[idx10], process_data['secantmodulus'].loc[idx50], process_data['secantmodulus'].loc[idx100]
+    
+    return sec_10, sec_50, sec_100, process_data
     
 
 def make_plot(ax, sheet, originele_data, xmean, ymean, final_line, gecorrigeerde_data,
@@ -143,7 +171,8 @@ def make_plot(ax, sheet, originele_data, xmean, ymean, final_line, gecorrigeerde
     
     
 def plot_graph(ax, file_path, sheet):
-    originele_data, D, h, strength, raw_data = read_data(file_path, sheet)
+    originele_data, raw_data = read_data(file_path, sheet)
+    D, h, strength, v = read_parameters(file_path, sheet)
     xmean = originele_data['Verplaatsing'].rolling(8).mean()
     ymean = originele_data['Kracht'].rolling(8).mean()
     max_index = ymean.idxmax()
@@ -158,7 +187,7 @@ def plot_graph(ax, file_path, sheet):
                 x_max, y_max, x_interp, y_interp, Gc)
     
     
-def make_table(file_path, grafiektitel):
+def make_table_summary_data(file_path, grafiektitel):
     sheet_lijst = []
     HR_lijst = []
     v_lijst = []
@@ -177,7 +206,8 @@ def make_table(file_path, grafiektitel):
     sheetnames = alle_sheets[3:] #vanaf sheet index 3
     
     for i, sheet in enumerate(sheetnames):
-        originele_data, D, h, buigtreksterkte, raw_data = read_data(file_path, sheet)
+        originele_data, raw_data = read_data(file_path, sheet)
+        D, h, buigtreksterkte, v = read_parameters(file_path, sheet)
         xmean = originele_data['Verplaatsing'].rolling(8).mean()
         ymean = originele_data['Kracht'].rolling(8).mean()
         max_index = ymean.idxmax()
@@ -187,10 +217,16 @@ def make_table(file_path, grafiektitel):
         gecorrigeerde_data = correct_data(gecorrigeerde_data, rc, intercept)
     
         rek_max, x_max, y_max, x_interp, y_interp, Gc, vormfactor = calc_fracture_data(gecorrigeerde_data, D, h)
+        sec_10, sec_50, sec_100, process_data = define_sec_modulus(file_path, sheet, gecorrigeerde_data, D, h)
         
         sheet_lijst.append(sheet)
+        HR_lijst.append(0)
+        v_lijst.append(v)
         breukenergie_lijst.append(Gc)
         rek_lijst.append(rek_max)
+        sec10_lijst.append(sec_10)
+        sec50_lijst.append(sec_50)
+        sec100_lijst.append(sec_100)
         vormfactor_lijst.append(vormfactor)
         buigtreksterkte_lijst.append(buigtreksterkte)
         Gc_rek_lijst.append(Gc / rek_max)
@@ -198,18 +234,25 @@ def make_table(file_path, grafiektitel):
 
 
     resultaten_df = pd.DataFrame({
-    'Sheetnaam': sheet_lijst,
-    # 'HR': HR_lijst,
-    # 'v': v_lijst,
-    'Buigtreksterkte [MPa]': buigtreksterkte_lijst,
-    'Breukenergie [J/m2]': breukenergie_lijst,
-    'Rek Bij Breuk [µm/m]': rek_lijst,
-    'Gc/eb': Gc_rek_lijst,
-    'Gc/(eb*ob)': Gc_rek_sig_lijst,
-    'Vormfactor [-]': vormfactor_lijst})
-    tabel= resultaten_df.sort_values(by='Sheetnaam',ascending=True)
-    print(tabel)  
-    #tabel.to_excel('Resultaten 3PB 25_32.xlsx')
+    'Proefstuk': sheet_lijst,
+    'HR': HR_lijst,
+    'v': v_lijst,
+    'sig_b': buigtreksterkte_lijst,
+    'eps_b': rek_lijst,
+    'Sec_10': sec10_lijst,
+    'Sec_50': sec50_lijst,
+    'Sec_100': sec100_lijst,    
+    'G_c': breukenergie_lijst,
+    'G_c/eps_b': Gc_rek_lijst,
+    'Gc/(eps_b.sig_b)': Gc_rek_sig_lijst,
+    'V_Ber': vormfactor_lijst})
+    tabel= resultaten_df.sort_values(by='Proefstuk',ascending=True)
+    print(tabel)
+    
+    pad = r'C:\Users\marloes.slokker\Infram BV\Infram Projecten - 23i741_KC WAB 2024 - WP 7 en 8\Uitvoering\Fase 1 - KCW (WP 7-1)\Data KCW 3PB - nagestuurde excels Kiwa KOAC\Data KCW 3PB\Fase 1'
+    tabel_naam = 'Summary_data_3PB_Delfzijl_test'
+    
+    tabel.to_excel(f'{pad}\{tabel_naam}.xlsx')
     return
 
 def make_table_raw_data(file_path, grafiektitel):
@@ -221,7 +264,7 @@ def make_table_raw_data(file_path, grafiektitel):
     dataframes_per_sheet = {}
 
     for sheet in sheetnames:
-        originele_data, D, h, buigtreksterkte, raw_data = read_data(file_path, sheet)
+        originele_data, raw_data = read_data(file_path, sheet)
 
         # Maak een dataframe voor deze sheet
         df = pd.DataFrame({
@@ -235,7 +278,7 @@ def make_table_raw_data(file_path, grafiektitel):
 
     # Voorbeeld: print eerste paar rijen van elke sheet
     for naam, df in dataframes_per_sheet.items():
-        print(f"Sheet: {naam}")
+        print(f"Proefstuk: {naam}")
         print(df.head(), "\n")
 
     return dataframes_per_sheet
@@ -251,7 +294,8 @@ def make_table_processed_data(file_path, grafiektitel, sheet):
     dataframes_per_sheet = {}
 
     for sheet in sheetnames:
-        originele_data, D, h, strength, raw_data = read_data(file_path, sheet)
+        originele_data, raw_data = read_data(file_path, sheet)
+        D, h, strength, v = read_parameters(file_path, sheet)
         xmean = originele_data['Verplaatsing'].rolling(8).mean()
         ymean = originele_data['Kracht'].rolling(8).mean()
         max_index = ymean.idxmax()
@@ -260,14 +304,16 @@ def make_table_processed_data(file_path, grafiektitel, sheet):
         gecorrigeerde_data = originele_data.copy()
         gecorrigeerde_data = correct_data(gecorrigeerde_data, rc, intercept)
         verplaatsing_corr = gecorrigeerde_data['Verplaatsing']
+        process_data = define_sec_modulus(file_path, sheet, gecorrigeerde_data, D, h)[3]
 
         # Maak een dataframe voor deze sheet
         df = pd.DataFrame({
             'F': gecorrigeerde_data['Kracht'],
+            # 'V_org': raw_data['verplaatsing'],
             'V_cor': verplaatsing_corr,
-            'eps': raw_data['rek'],
-            'sig': raw_data['spanning'],
-            'Sec': raw_data['secantmodulus']
+            'eps': process_data['rek'],
+            'sig': process_data['spanning'],
+            'Sec': process_data['secantmodulus']
         })
 
         # Voeg toe aan dictionary met sheetnaam als key
@@ -275,7 +321,7 @@ def make_table_processed_data(file_path, grafiektitel, sheet):
 
     # Voorbeeld: print eerste paar rijen van elke sheet
     for naam, df in dataframes_per_sheet.items():
-        print(f"Sheet: {naam}")
+        print(f"Proefstuk: {naam}")
         print(df.head(), "\n")
 
     return dataframes_per_sheet
