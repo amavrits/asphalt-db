@@ -8,7 +8,7 @@ import json
 def create_db(db_config):
 
     admin_conn = psycopg.connect(
-        dbname="postgres",  # connect to default DB to create your target DB
+        dbname=DB_CONFIG["database"],
         user=db_config["user"],
         password=db_config["password"],
         host=db_config["host"],
@@ -41,7 +41,9 @@ def create_tables(db):
         Test,
         GeneralData,
         StrSampleRaw,
+        StrSampleProcessed,
         FtgSampleRaw,
+        FtgSampleProcessed,
         EdynSampleRaw
     ],
         safe=True)
@@ -55,7 +57,9 @@ def create_tables(db):
         Test,
         GeneralData,
         StrSampleRaw,
+        StrSampleProcessed,
         FtgSampleRaw,
+        FtgSampleProcessed,
         EdynSampleRaw
     ],
         safe=True)
@@ -71,7 +75,7 @@ def add_project(project_name, project_data):
 
 
 def add_dike(dike_name, dike_data):
-    Dike(
+    Dike.get_or_create(
         dike_name=dike_name,
         waterboard=dike_data["waterboard"],
         notes=dike_data["notes"]
@@ -79,9 +83,9 @@ def add_dike(dike_name, dike_data):
 
 
 def add_projectdike(dike_name, project_name):
-    ProjectDike(
-        dike=Dike(dike_name=dike_name),
-        project=Project(project_name=project_name)
+    ProjectDike.get_or_create(
+        dike=Dike.get(dike_name=dike_name),
+        project=Project.get(project_name=project_name)
     )
 
 
@@ -90,11 +94,11 @@ def add_borehole(borehole_name, project_name, master_table, borehole_data):
     cond = (master_table["project"] == project_name) & (master_table["borehole"] == borehole_name)
     dike_name = master_table.loc[cond, "dike"].item()
 
-    Borehole(
+    Borehole.get_or_create(
         borehole_name=borehole_name,
-        project_dike=ProjectDike(
-            dike=Dike(dike_name=dike_name),
-            project=Project(project_name=project_name)
+        project_dike=ProjectDike.get(
+            dike=Dike.get(dike_name=dike_name),
+            project=Project.get(project_name=project_name)
         ),
         collection_date=borehole_data["collection_date"],
         X_coord=borehole_data["X_coord"],
@@ -104,8 +108,8 @@ def add_borehole(borehole_name, project_name, master_table, borehole_data):
 
 
 def add_sample(sample_name, borehole_name, sample_data):
-    Sample(
-        borehole=Borehole(borehole_name=borehole_name),
+    Sample.get_or_create(
+        borehole=Borehole.get(borehole_name=borehole_name),
         sample_name=sample_name,
         depth=sample_data["depth"],
         notes=sample_data["notes"]
@@ -119,8 +123,8 @@ def add_sample_general_data(sample_name, borehole_name, project_name, general_da
            (general_data["sample"] == sample_name)
     general_data_sample = general_data.loc[cond, :]
 
-    GeneralData(
-        sample=Sample(sample_name=sample_name),
+    GeneralData.get_or_create(
+        sample=Sample.get(sample_name=sample_name),
         e=general_data_sample["e"]
     )
 
@@ -131,8 +135,8 @@ def add_sample_test(test_name, sample_name, borehole_folder):
     has_ftg = not any((borehole_folder / "ftg").iterdir())
     has_stf = not any((borehole_folder / "stf").iterdir())
 
-    Test(
-        sample=Sample(sample_name=sample_name),
+    Test.get_or_create(
+        sample=Sample.get(sample_name=sample_name),
         test_name=test_name,
         strength=has_str,
         fatigue=has_ftg,
@@ -140,9 +144,10 @@ def add_sample_test(test_name, sample_name, borehole_folder):
     )
 
 
-def add_str_raw(test_name, test_data):
-    StrSampleRaw(
-        test=Test(test_name=test_name),
+def add_str_raw(sample_name, test_name, test_data):
+    StrSampleRaw.get_or_create(
+        test=Test.get(test_name=test_name),
+        sample_name=sample_name,
         notes=test_data["notes"],
         t=test_data["t"],
         F=test_data["F"],
@@ -150,9 +155,10 @@ def add_str_raw(test_name, test_data):
     )
 
 
-def add_ftg_raw(test_name, test_data):
-    FtgSampleRaw(
-        test=Test(test_name=test_name),
+def add_ftg_raw(sample_name, test_name, test_data):
+    FtgSampleRaw.get_or_create(
+        test=Test.get(test_name=test_name),
+        sample_name=sample_name,
         notes=test_data["notes"],
         N=test_data["N"],
         maximum_stroke=test_data["MaximumStroke"],
@@ -165,9 +171,10 @@ def add_ftg_raw(test_name, test_data):
     )
 
 
-def add_edyn_raw(test_name, test_data):
-    EdynSampleRaw(
-        test=Test(test_name=test_name),
+def add_edyn_raw(sample_name, test_name, test_data):
+    EdynSampleRaw.get_or_create(
+        test=Test.get(test_name=test_name),
+        sample_name=sample_name,
         notes=test_data["notes"],
         T=test_data["T"],
         f=test_data["f"],
@@ -177,10 +184,10 @@ def add_edyn_raw(test_name, test_data):
     )
 
 
-
-def add_str_processed(test_name, test_data):
-    StrSampleProcessed(
-        sample_raw=StrSampleRaw(test_name=test_name),
+def add_str_processed(sample_name, test_name, test_data):
+    StrSampleProcessed.get_or_create(
+        sample_raw=StrSampleRaw.get(sample_name=sample_name),
+        sample_name=sample_name,
         notes=test_data["notes"],
         F=test_data["F"],
         V_cor=test_data["V_cor"],
@@ -190,9 +197,10 @@ def add_str_processed(test_name, test_data):
     )
 
 
-def add_ftg_processed(test_name, test_data):
-    FtgSampleProcessed(
-        sample_raw=FtgSampleRaw(test_name=test_name),
+def add_ftg_processed(sample_name, test_name, test_data):
+    FtgSampleProcessed.get_or_create(
+        sample_raw=FtgSampleRaw.get(sample_name=sample_name),
+        sample_name=sample_name,
         notes=test_data["notes"],
         N=test_data["N"],
         eps_cycl=test_data["eps_cycl"],
@@ -231,18 +239,18 @@ def add_samples(test_name, test_folder, data_type="raw"):
         if test_folder.stem == "str":
 
             if data_type == "raw":
-                add_str_raw(test_name, data)
+                add_str_raw(sample_name, test_name, data)
             elif data_type == "processed":
-                add_str_processed(test_name, data)
+                add_str_processed(sample_name, test_name, data)
             else:
                 raise ValueError(f"Unknown data type: {data_type}")
 
         elif test_folder.stem == "ftg":
 
             if data_type == "raw":
-                add_ftg_raw(test_name, data)
+                add_ftg_raw(sample_name, test_name, data)
             elif data_type == "processed":
-                add_ftg_processed(test_name, data)
+                add_ftg_processed(sample_name, test_name, data)
             else:
                 raise ValueError(f"Unknown data type: {data_type}")
 
@@ -252,7 +260,7 @@ def add_samples(test_name, test_folder, data_type="raw"):
                 continue
 
             if data_type == "raw":
-                add_edyn_raw(test_name, data)
+                add_edyn_raw(sample_name, test_name, data)
             else:
                 raise ValueError(f"Unknown data type: {data_type}")
 

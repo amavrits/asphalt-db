@@ -1,19 +1,13 @@
-import os
 import pandas as pd
 from src.config import DB_CONFIG
 from src.db_builder.models import *
 from src.db_builder.build import *
 from src.db_builder.utils import *
 from pathlib import Path
-from dotenv import load_dotenv
 import json
 
 
 if __name__ == "__main__":
-
-    # -----------------------
-    # Load environment variables
-    # -----------------------
 
     SCRIPT_DIR = Path(__file__).parent
     data_path = SCRIPT_DIR.parent / "data/dummy"
@@ -62,12 +56,12 @@ if __name__ == "__main__":
                 test_name = f"T_{sample_name}"
                 add_sample_test(test_name, sample_name, borehole_folder)
 
-                test_folder_list = [file for file in borehole_folder.iterdir() if file.name.split(".")[-1] != "json"]
+            test_folder_list = [file for file in borehole_folder.iterdir() if file.name.split(".")[-1] != "json"]
 
-                for test_folder in test_folder_list:
+            for test_folder in test_folder_list:
 
-                    for data_type in ["raw", "processed"]:
-                        add_samples(test_name, test_folder, data_type)
+                for data_type in ["raw", "processed"]:
+                    add_samples(test_name, test_folder, data_type)
 
     db.close()
 

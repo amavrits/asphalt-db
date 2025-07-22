@@ -56,6 +56,7 @@ class GeneralData(BaseModel):
 class StrSampleRaw(BaseModel):
     test = ForeignKeyField(Test, backref='str_samples', null=True)
     notes = TextField(null=True)
+    sample_name = CharField()
 
     # STR raw test fields
     t = FloatField(null=True)        # time or thickness (depends on context)
@@ -63,8 +64,9 @@ class StrSampleRaw(BaseModel):
     V_org = FloatField(null=True)    # original volume
 
 class StrSampleProcessed(BaseModel):
-    sample_raw = ForeignKeyField(Test, backref='processed_samples', null=True)
+    sample_raw = ForeignKeyField(StrSampleRaw, backref='processed_samples', null=True)
     notes = TextField(null=True)
+    sample_name = CharField()
 
     # STR processed test fields
     F = FloatField(null=True)         # force
@@ -96,6 +98,7 @@ class StrSampleProcessed(BaseModel):
 class FtgSampleRaw(BaseModel):
     test = ForeignKeyField(Test, backref='ftg_samples', null=True)
     notes = TextField(null=True)
+    sample_name = CharField()
 
     # FTG-specific test fields
     N = IntegerField(null=True)  # Number of cycles, perhaps?
@@ -108,8 +111,9 @@ class FtgSampleRaw(BaseModel):
     out_phase_modulus = FloatField(null=True)
 
 class FtgSampleProcessed(BaseModel):
-    sample_raw = ForeignKeyField(Test, backref='processed_samples', null=True)
+    sample_raw = ForeignKeyField(FtgSampleRaw, backref='processed_samples', null=True)
     notes = TextField(null=True)
+    sample_name = CharField()
 
     # FTG processed test fields
     N = IntegerField(null=True)
@@ -139,6 +143,7 @@ class FtgSampleProcessed(BaseModel):
 class EdynSampleRaw(BaseModel):
     test = ForeignKeyField(Test, backref='Edyn_samples', null=True)
     notes = TextField(null=True)
+    sample_name = CharField()
 
     # Edyn raw test fields
     T = FloatField(null=True)         # Temperature (assumed)
