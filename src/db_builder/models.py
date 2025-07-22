@@ -40,7 +40,8 @@ class Sample(BaseModel):
     notes = TextField(null=True)
 
 class Test(BaseModel):
-    borehole = ForeignKeyField(Sample, backref='tests', null=True)
+    sample = ForeignKeyField(Sample, backref='tests', null=True)
+    test_name = CharField()
     notes = TextField(null=True)
     strength = BooleanField(null=False)
     fatigue = BooleanField(null=False)
@@ -48,13 +49,12 @@ class Test(BaseModel):
 
 class GeneralData(BaseModel):
     sample = ForeignKeyField(Sample, backref='gen_samples', null=True)
-    notes = TextField(null=True)
 
     # Additional test fields
     e = FloatField(null=True)        # void ratio (e)
 
 class StrSampleRaw(BaseModel):
-    borehole = ForeignKeyField(Test, backref='str_samples', null=True)
+    test = ForeignKeyField(Test, backref='str_samples', null=True)
     notes = TextField(null=True)
 
     # STR raw test fields
@@ -94,7 +94,7 @@ class StrSampleProcessed(BaseModel):
 #     V_Ber = FloatField(null=True)              # Some volume metric?
 
 class FtgSampleRaw(BaseModel):
-    borehole = ForeignKeyField(Test, backref='ftg_samples', null=True)
+    test = ForeignKeyField(Test, backref='ftg_samples', null=True)
     notes = TextField(null=True)
 
     # FTG-specific test fields
@@ -137,7 +137,7 @@ class FtgSampleProcessed(BaseModel):
 #     N_fat = IntegerField(null=True)    # fatigue life (cycle count)
 
 class EdynSampleRaw(BaseModel):
-    borehole = ForeignKeyField(Test, backref='Edyn_samples', null=True)
+    test = ForeignKeyField(Test, backref='Edyn_samples', null=True)
     notes = TextField(null=True)
 
     # Edyn raw test fields

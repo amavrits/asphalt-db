@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
             np.random.seed(i * 1_000 + j)
             dike = np.random.randint(1, n_dikes+1)
-            master_df.loc[len(master_df)] = [project, bh, dike]
+            master_df.loc[len(master_df)] = [f"P_{project}", f"BH_{bh}", f"D_{dike}"]
 
             borehole_data = {
                 "borehole_name": f"BH_{bh}",
@@ -49,19 +49,23 @@ if __name__ == "__main__":
                 with open(SCRIPT_DIR.parent / f"data/{data_type}_columns.json", "r") as f:
                     test = json.load(f)
 
+                sample_data = {}
                 for sample in range(1, n_samples + 1):
 
-                    sample_path = borehole_path / f"S_{sample}"
-                    sample_path.mkdir(exist_ok=True, parents=True)
+                    general_data.append([f"P_{project}", f"BH_{bh}", f"S_{sample}", 0])
 
-                    sample_data = {
-                        "sample_name": f"S_{sample}",
+                    sample_data[f"S_{sample}"] = {
                         "depth": 0,
                         "notes": ["DDDDDD"],
                     }
 
-                    with open(sample_path/"sample_data.json", "w") as f:
-                        json.dump(sample_data, f, indent=4)
+                with open(borehole_path/"sample_data.json", "w") as f:
+                    json.dump(sample_data, f, indent=4)
+
+                for (test_name, test_columns) in test.items():
+
+                    test_path = borehole_path / f"{test_name}"
+                    test_path.mkdir(exist_ok=True, parents=True)
 
                     test_data = {
                         "str_appratus": "A",
@@ -70,28 +74,21 @@ if __name__ == "__main__":
                         "notes": ["DDDDDD"],
                     }
 
-                    with open(sample_path/"test_data.json", "w") as f:
+                    with open(test_path/"test_data.json", "w") as f:
                         json.dump(test_data, f, indent=4)
 
-                    for (test_name, test_columns) in test.items():
-
-                        test_data = np.zeros((n, len(test_columns)))
-                        df = pd.DataFrame(test_data, columns=test_columns)
-                        df.to_csv(sample_path/f"{test_name}.csv", index=False)
-
-                    general_data.append([project, bh, sample, 0])
+                    test_data = {"sample_name": [f"S_{i}" for i in range(1, n_samples+1)]}
+                    for col in test_columns:
+                        test_data.update({col: np.zeros(n_samples)})
+                    test_data.update({"notes": "EEEEEEE"})
+                    df = pd.DataFrame(test_data)
+                    df.to_csv(test_path/f"{data_type}_data.csv", index=False)
 
     general_data = pd.DataFrame(general_data, columns=["project", "borehole", "sample", "e"])
-    general_data.to_csv(SCRIPT_DIR.parent / f"data/dummy/general_data.csv")
+    general_data = general_data.drop_duplicates(subset=["project", "borehole", "sample"])
+    general_data.to_csv(SCRIPT_DIR.parent / f"data/dummy/general_data.csv", index=False)
 
-    master_df.to_csv(SCRIPT_DIR.parent / f"data/dummy/master_table.csv")
-
-    dike_data = {
-        "waterboard": ["HHNK"] * n_dikes,
-        "notes": ["AAAA"] * n_dikes,
-    }
-    df_dikes = pd.DataFrame(data=dike_data)
-    df_dikes.to_csv(SCRIPT_DIR.parent / f"data/dummy/dike_data.csv")
+    master_df.to_csv(SCRIPT_DIR.parent / f"data/dummy/master_table.csv", index=False)
 
     dike_data = {
         "dike_name": [f"D_{i}" for i in range(1, n_dikes+1)],
@@ -99,7 +96,7 @@ if __name__ == "__main__":
         "notes": ["AAAA"] * n_dikes,
     }
     df_dikes = pd.DataFrame(data=dike_data)
-    df_dikes.to_csv(SCRIPT_DIR.parent / f"data/dummy/dike_data.csv")
+    df_dikes.to_csv(SCRIPT_DIR.parent / f"data/dummy/dike_table.csv", index=False)
 
     project_data = {
         "project_name": [f"P_{i}" for i in range(1, n_projects+1)],
@@ -108,7 +105,7 @@ if __name__ == "__main__":
         "notes": ["AAAA"] * n_projects
     }
     df_projects = pd.DataFrame(data=project_data)
-    df_projects.to_csv(SCRIPT_DIR.parent / f"data/dummy/project_data.csv")
+    df_projects.to_csv(SCRIPT_DIR.parent / f"data/dummy/project_table.csv", index=False)
 
     # n_total_boreholes = len(master_df)
     # borehole_data = {
