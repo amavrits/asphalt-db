@@ -1,9 +1,11 @@
 import os
-from peewee import PostgresqlDatabase, Model, CharField, ForeignKeyField
-import psycopg
-from dotenv import load_dotenv
-from pathlib import Path
+import pandas as pd
 from src.config import DB_CONFIG
+from src.db_builder.models import *
+from src.db_builder.build import *
+from pathlib import Path
+from dotenv import load_dotenv
+from datetime import datetime
 
 
 if __name__ == "__main__":
@@ -13,84 +15,108 @@ if __name__ == "__main__":
     # -----------------------
 
     SCRIPT_DIR = Path(__file__).parent
+    data_path = SCRIPT_DIR.parent / "data/dummy/compiled_data.csv"
     dotenv_path = SCRIPT_DIR.parent / ".env"
     load_dotenv(dotenv_path)
+
+    df = pd.read_csv(data_path)
+    df[["waterboard", "notes", "X_coord", "Y_coord", "depth", "e"]] = 0
+    df[["date", "collection_date"]] = datetime.utcnow()
+
+
+
+
 
     # -----------------------
     # Step 1: Create the database if it doesn't exist
     # -----------------------
 
-    admin_conn = psycopg.connect(
-        dbname="postgres",  # connect to default DB to create your target DB
-        user=DB_CONFIG["user"],
-        password=DB_CONFIG["password"],
-        host=DB_CONFIG["host"],
-        port=DB_CONFIG["port"],
-        autocommit=True
-    )
-
-    with admin_conn.cursor() as cur:
-        cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (DB_CONFIG["database"],))
-        exists = cur.fetchone()
-        if not exists:
-            cur.execute(f"CREATE DATABASE {DB_CONFIG['database']}")
-            print(f"Database '{DB_CONFIG['database']}' created.")
-        else:
-            print(f"Database '{DB_CONFIG['database']}' already exists.")
-
-    admin_conn.close()
+    create_db(DB_CONFIG)
 
     # -----------------------
-    # Step 2: Connect via Peewee and define model
-    # -----------------------
-
-    db = PostgresqlDatabase(
-        database=DB_CONFIG["database"],
-        user=DB_CONFIG["user"],
-        password=DB_CONFIG["password"],
-        host=DB_CONFIG["host"],
-        port=DB_CONFIG["port"]
-    )
-
-
-    class BaseModel(Model):
-        class Meta:
-            database = db
-
-
-    class User(BaseModel):
-        name = CharField()
-        email = CharField(unique=True)
-
-
-    class UserPet(BaseModel):
-        owner = ForeignKeyField(User, backref='pets')
-        name = CharField()
-        type = CharField()
-
-
-    # -----------------------
-    # Step 3: Create table and populate data
+    # Step 2: Create table and populate data
     # -----------------------
 
     db.connect()
-    db.create_tables([User, UserPet], safe=True)
 
-    users = [
-        {"name": "Alice", "email": "alice@example.com"},
-        {"name": "Bob", "email": "bob@example.com"},
-        {"name": "Charlie", "email": "charlie@example.com"},
-    ]
+    db.drop_tables([
+        Dike,
+        Project,
+        ProjectDike,
+        Borehole,
+        Sample,
+        Test,
+        GeneralData,
+        StrSampleRaw,
+        FtgSampleRaw,
+        EdynSampleRaw
+    ],
+        safe=True)
 
-    for user_data in users:
-        User.get_or_create(**user_data)
+    db.create_tables([
+        Dike,
+        Project,
+        ProjectDike,
+        Borehole,
+        Sample,
+        Test,
+        GeneralData,
+        StrSampleRaw,
+        FtgSampleRaw,
+        EdynSampleRaw
+    ],
+        safe=True)
 
-    alice, _ = User.get_or_create(name="Alice", email="alice@example.com")
-    bob, _ = User.get_or_create(name="Bob", email="bob@example.com")
 
-    UserPet.get_or_create(name="Whiskers", type="cat", owner=alice)
-    UserPet.get_or_create(name="Fido", type="dog", owner=alice)
-    UserPet.get_or_create(name="Goldie", type="fish", owner=bob)
 
-    print("Users inserted successfully!")
+    dike_df = df.drop_duplicates(subset=["dike_name"])
+    dikes = list(dike_df[["dike_name", "waterboard", "notes"]].T.to_dict().values())
+    for dike_data in dikes:
+        Dike.get_or_create(**dike_data)
+
+    project_df = df.drop_duplicates(subset=["project_name"])
+    projects = list(project_df[["project_name", "project_code", "date", "notes"]].T.to_dict().values())
+    for project_data in projects:
+        Project.get_or_create(**project_data)
+
+    dikeproject_df = df.drop_duplicates(subset=["dike_name", "project_name"])
+    for i, row in dikeproject_df.iterrows():
+        dike_name, project_name = row["dike_name"], row["project_name"]
+        dike, _ = Dike.get_or_create(dike_name=dike_name)
+        project, _ = Project.get_or_create(project_name=project_name)
+        ProjectDike.get_or_create(dike=dike, project=project)
+
+    
+    borehole_df = df.drop_duplicates(subset=["borehole_name", "dike_name", "project_name"])
+    for i, row in borehole_df.iterrows():
+        dike_name, project_name = row["dike_name"], row["project_name"]
+        dike, _ = Dike.get_or_create(dike_name=dike_name)
+        project, _ = Project.get_or_create(project_name=project_name)
+        dp, _ = ProjectDike.get_or_create(dike=dike, project=project)
+        Borehole.get_or_create(
+            borehole_name=row["borehole_name"],
+            project_dike=dp,
+            collection_date=row["collection_date"],
+            X_coord=row["X_coord"],
+            Y_coord=row["Y_coord"],
+            notes=row["notes"],
+        )
+
+
+    sample_df = df.drop_duplicates(subset=["sample_name", "borehole_name", "dike_name", "project_name"])
+    for i, row in sample_df.iterrows():
+        dike_name, project_name = row["dike_name"], row["project_name"]
+        dike, _ = Dike.get_or_create(dike_name=dike_name)
+        project, _ = Project.get_or_create(project_name=project_name)
+        dp, _ = ProjectDike.get_or_create(dike=dike, project=project)
+        bh = Borehole.get_or_create(project_dike=dp)
+        Sample.get_or_create(
+            borehole=bh,
+            sample_name=row["sample_name"],
+            depth=row["collection_date"],
+            notes=row["notes"],
+        )
+
+
     db.close()
+
