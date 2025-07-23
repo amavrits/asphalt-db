@@ -129,7 +129,7 @@ def add_test_data(model_cls, test_name, sample_name, borehole_name, project_name
     test = Test.get(test_name=test_name, sample=sample)
     for row in test_data:
         model_cls.create(test=test, sample_name=sample_name, **row)
-    print(1)
+    print(1, test_name, sample_name, borehole_name, project_name)
 
 
 def add_processed_data(model_cls, raw_cls, test_name, sample_name, borehole_name, project_name, master_table, test_data):
@@ -161,7 +161,8 @@ def add_samples(borehole_name, project_name, master_table, test_folder, data_typ
     with open(test_folder / "test_data.json", "r") as f:
         test_data = json.load(f)
 
-    for sample_name in df.index:
+    for sample_name in df.index.unique():
+        print(borehole_name, sample_name)
         if len(df) == 1:
             data = [df.loc[sample_name].to_dict()]
         else:
@@ -170,16 +171,21 @@ def add_samples(borehole_name, project_name, master_table, test_folder, data_typ
 
         if test_folder.stem == "strength":
             if data_type == "raw":
+                print("Adding raw strength data strength")
                 add_test_data(StrSampleRaw, test_name, sample_name, borehole_name, project_name, master_table, data)
             elif data_type == "processed":
+                print("Adding processed strength data strength")
                 add_processed_data(StrSampleProcessed, StrSampleRaw, test_name, sample_name, borehole_name, project_name, master_table, data)
         elif test_folder.stem == "fatigue":
             if data_type == "raw":
+                print("Adding raw fatigue data")
                 add_test_data(FtgSampleRaw, test_name, sample_name, borehole_name, project_name, master_table, data)
             elif data_type == "processed":
+                print("Adding processed fatigue data")
                 add_processed_data(FtgSampleProcessed, FtgSampleRaw, test_name, sample_name, borehole_name, project_name, master_table, data)
         elif test_folder.stem == "stiffness":
             if data_type == "raw":
+                print("Adding raw stiffness data")
                 add_test_data(StiffnessSampleRaw, test_name, sample_name, borehole_name, project_name, master_table, data)
         else:
             raise ValueError(f"Unknown test type {test_folder.stem}")
