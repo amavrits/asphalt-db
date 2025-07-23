@@ -249,10 +249,10 @@ def make_table_summary_data(file_path, grafiektitel):
     tabel= resultaten_df.sort_values(by='Proefstuk',ascending=True)
     print(tabel)
     
-    pad = r'C:\Users\marloes.slokker\Infram BV\Infram Projecten - 23i741_KC WAB 2024 - WP 7 en 8\Uitvoering\Fase 1 - KCW (WP 7-1)\Data KCW 3PB - nagestuurde excels Kiwa KOAC\Data KCW 3PB\Fase 1'
-    tabel_naam = 'Summary_data_3PB_Delfzijl_test'
+    # pad = r'C:\Users\marloes.slokker\Infram BV\Infram Projecten - 23i741_KC WAB 2024 - WP 7 en 8\Uitvoering\Fase 1 - KCW (WP 7-1)\Data KCW 3PB - nagestuurde excels Kiwa KOAC\Data KCW 3PB\Fase 1'
+    # tabel_naam = 'Summary_data_3PB_Delfzijl_test'
     
-    tabel.to_excel(f'{pad}\{tabel_naam}.xlsx')
+    # tabel.to_excel(f'{pad}\{tabel_naam}.xlsx')
     return
 
 def make_table_raw_data(file_path, grafiektitel):
@@ -268,9 +268,11 @@ def make_table_raw_data(file_path, grafiektitel):
 
         # Maak een dataframe voor deze sheet
         df = pd.DataFrame({
+            'sample_name': sheet,
             't': raw_data['tijd'],
             'F': raw_data['kracht'],
-            'V_org': raw_data['verplaatsing']
+            'V_org': raw_data['verplaatsing'],
+            'notes': ' '
         })
 
         # Voeg toe aan dictionary met sheetnaam als key
@@ -280,6 +282,13 @@ def make_table_raw_data(file_path, grafiektitel):
     for naam, df in dataframes_per_sheet.items():
         print(f"Proefstuk: {naam}")
         print(df.head(), "\n")
+        ## save as csv
+
+        df.to_csv(f'{naam}_raw_data.csv', index=False)
+
+
+
+
 
     return dataframes_per_sheet
 

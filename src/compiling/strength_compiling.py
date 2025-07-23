@@ -17,7 +17,8 @@ from src.processing.strength_processing import plot_graph, make_table_summary_da
 
 
 #INVOER
-file_path = r'C:\Users\marloes.slokker\Infram BV\Infram Projecten - 23i741_KC WAB 2024 - WP 7 en 8\Uitvoering\Fase 1 - KCW (WP 7-1)\Data KCW 3PB - nagestuurde excels Kiwa KOAC\Data KCW 3PB\Fase 1\Analyse Bezwijksterkte 3pb_1_8.xlsm'
+file_path = Path(r'c:\Users\hauth\OneDrive - Stichting Deltares\Documents\Analyse Bezwijksterkte 3pb_vak1.xlsm')
+# file_path = r'C:\Users\marloes.slokker\Infram BV\Infram Projecten - 23i741_KC WAB 2024 - WP 7 en 8\Uitvoering\Fase 1 - KCW (WP 7-1)\Data KCW 3PB - nagestuurde excels Kiwa KOAC\Data KCW 3PB\Fase 1\Analyse Bezwijksterkte 3pb_1_8.xlsm'
 # main_path = r'C:\Users\marloes.slokker\Infram BV\Infram Projecten - 23i740_KC WAB 2024\Uitvoering\levensduurmodel WAB'
 # main_path = Path(main_path)
 
@@ -40,7 +41,7 @@ file_path = r'C:\Users\marloes.slokker\Infram BV\Infram Projecten - 23i741_KC WA
 
 
 
-grafiektitel = 'Delfzijl 1-8'
+grafiektitel = 'Vak 1 (POV Wadden)'
 
 print(f'De resultaten van de driepuntsbuigproeven van **{grafiektitel}** zijn de volgende:')
 
@@ -55,16 +56,15 @@ f = pd.ExcelFile(file_path)
 alle_sheets = f.sheet_names
 sheetnames = alle_sheets[3:]
 
-for i, sheet in enumerate(sheetnames):
-    plot_graph(axs[i], file_path, sheet)
+# for i, sheet in enumerate(sheetnames):
+#     plot_graph(axs[i], file_path, sheet)
 
 make_table_raw_data(file_path, grafiektitel)    
 make_table_processed_data(file_path, grafiektitel, sheetnames)    
 make_table_summary_data(file_path, grafiektitel)
 
 
-plt.suptitle(grafiektitel, fontsize=15)
-plt.tight_layout(rect=[0, 0, 1, 0.98])
-plt.show()
-    
-    
+# plt.suptitle(grafiektitel, fontsize=15)
+# plt.tight_layout(rect=[0, 0, 1, 0.98])
+# plt.show()
+
