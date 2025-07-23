@@ -282,13 +282,9 @@ def make_table_raw_data(file_path, grafiektitel):
     for naam, df in dataframes_per_sheet.items():
         print(f"Proefstuk: {naam}")
         print(df.head(), "\n")
+
         ## save as csv
-
         df.to_csv(f'{naam}_raw_data.csv', index=False)
-
-
-
-
 
     return dataframes_per_sheet
 
