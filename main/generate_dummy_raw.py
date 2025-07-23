@@ -15,7 +15,7 @@ if __name__ == "__main__":
     n_samples = 1
 
     SCRIPT_DIR = Path(__file__).parent
-    base_folder = SCRIPT_DIR.parent / "data/dummy"
+    base_folder = SCRIPT_DIR.parent / "data/dummy2"
     if base_folder.is_dir():
         shutil.rmtree(base_folder)
     base_folder.mkdir(exist_ok=True, parents=True)
@@ -86,9 +86,11 @@ if __name__ == "__main__":
 
     general_data = pd.DataFrame(general_data, columns=["project", "borehole", "sample", "e"])
     general_data = general_data.drop_duplicates(subset=["project", "borehole", "sample"])
-    general_data.to_csv(SCRIPT_DIR.parent / f"data/dummy/general_data.csv", index=False)
+    general_data.to_csv(base_folder.joinpath("general_data.csv"), index=False)
 
-    master_df.to_csv(SCRIPT_DIR.parent / f"data/dummy/master_table.csv", index=False)
+
+
+    master_df.to_csv(base_folder.joinpath("master_table.csv"), index=False)
 
     dike_data = {
         "dike_name": [f"D_{i}" for i in range(1, n_dikes+1)],
@@ -96,7 +98,7 @@ if __name__ == "__main__":
         "notes": ["AAAA"] * n_dikes,
     }
     df_dikes = pd.DataFrame(data=dike_data)
-    df_dikes.to_csv(SCRIPT_DIR.parent / f"data/dummy/dike_table.csv", index=False)
+    df_dikes.to_csv(base_folder.joinpath("dike_table.csv"), index=False)
 
     project_data = {
         "project_name": [f"P_{i}" for i in range(1, n_projects+1)],
@@ -105,7 +107,8 @@ if __name__ == "__main__":
         "notes": ["AAAA"] * n_projects
     }
     df_projects = pd.DataFrame(data=project_data)
-    df_projects.to_csv(SCRIPT_DIR.parent / f"data/dummy/project_table.csv", index=False)
+    # df_projects.to_csv(SCRIPT_DIR.parent / f"data/dummy/project_table.csv", index=False)
+    df_projects.to_csv(base_folder.joinpath("project_table.csv"), index=False)
 
     # n_total_boreholes = len(master_df)
     # borehole_data = {

@@ -232,7 +232,6 @@ def make_table_summary_data(file_path, grafiektitel):
         Gc_rek_lijst.append(Gc / rek_max)
         Gc_rek_sig_lijst.append(Gc / (rek_max * buigtreksterkte))
 
-
     resultaten_df = pd.DataFrame({
     'Proefstuk': sheet_lijst,
     'HR': HR_lijst,
@@ -245,8 +244,13 @@ def make_table_summary_data(file_path, grafiektitel):
     'G_c': breukenergie_lijst,
     'G_c/eps_b': Gc_rek_lijst,
     'Gc/(eps_b.sig_b)': Gc_rek_sig_lijst,
-    'V_Ber': vormfactor_lijst})
+    'V_Ber': vormfactor_lijst,
+    'sample_name': sheet_lijst,
+    'notes': '',
+    })
     tabel= resultaten_df.sort_values(by='Proefstuk',ascending=True)
+    tabel.to_csv(f'_summarized_data.csv', index=False)
+
     print(tabel)
     
     # pad = r'C:\Users\marloes.slokker\Infram BV\Infram Projecten - 23i741_KC WAB 2024 - WP 7 en 8\Uitvoering\Fase 1 - KCW (WP 7-1)\Data KCW 3PB - nagestuurde excels Kiwa KOAC\Data KCW 3PB\Fase 1'
@@ -255,7 +259,7 @@ def make_table_summary_data(file_path, grafiektitel):
     # tabel.to_excel(f'{pad}\{tabel_naam}.xlsx')
     return
 
-def make_table_raw_data(file_path, grafiektitel):
+def make_table_raw_data(file_path):
     f = pd.ExcelFile(file_path)
     alle_sheets = f.sheet_names
     sheetnames = alle_sheets[3:]  # vanaf sheet index 3
@@ -312,13 +316,16 @@ def make_table_processed_data(file_path, grafiektitel, sheet):
         process_data = define_sec_modulus(file_path, sheet, gecorrigeerde_data, D, h)[3]
 
         # Maak een dataframe voor deze sheet
+
         df = pd.DataFrame({
+            'sample_name': sheet,
             'F': gecorrigeerde_data['Kracht'],
             # 'V_org': raw_data['verplaatsing'],
             'V_cor': verplaatsing_corr,
             'eps': process_data['rek'],
             'sig': process_data['spanning'],
-            'Sec': process_data['secantmodulus']
+            'Sec': process_data['secantmodulus'],
+            'notes': '',
         })
 
         # Voeg toe aan dictionary met sheetnaam als key
@@ -328,6 +335,9 @@ def make_table_processed_data(file_path, grafiektitel, sheet):
     for naam, df in dataframes_per_sheet.items():
         print(f"Proefstuk: {naam}")
         print(df.head(), "\n")
+
+        df.to_csv(f'{naam}_processed_data.csv', index=False)
+
 
     return dataframes_per_sheet
     

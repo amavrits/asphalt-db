@@ -124,17 +124,20 @@ def add_sample_test(test_name, sample_name, borehole_name, project_name, master_
     Test.create(sample=sample, test_name=test_name, strength=has_str, fatigue=has_ftg, stiffness=has_stf)
 
 
-def add_test_data(model_cls, test_name, sample_name, borehole_name, project_name, master_table, test_data):
+def add_test_data(model_cls, test_name, sample_name, borehole_name, project_name, master_table, test_data: list[dict]):
     *_, sample = resolve_sample(sample_name, borehole_name, project_name, master_table)
     test = Test.get(test_name=test_name, sample=sample)
-    model_cls.create(test=test, sample_name=sample_name, **test_data)
+    for row in test_data:
+        model_cls.create(test=test, sample_name=sample_name, **row)
+    print(1)
 
 
 def add_processed_data(model_cls, raw_cls, test_name, sample_name, borehole_name, project_name, master_table, test_data):
     *_, sample = resolve_sample(sample_name, borehole_name, project_name, master_table)
     test = Test.get(test_name=test_name, sample=sample)
     sample_raw = raw_cls.get(test=test, sample_name=sample_name)
-    model_cls.create(sample_raw=sample_raw, sample_name=sample_name, **test_data)
+    for row in test_data:
+        model_cls.create(sample_raw=sample_raw, sample_name=sample_name, **row)
 
 
 def add_str_summarized(test_name, sample_name, borehole_name, project_name, master_table, test_data):
@@ -159,7 +162,10 @@ def add_samples(borehole_name, project_name, master_table, test_folder, data_typ
         test_data = json.load(f)
 
     for sample_name in df.index:
-        data = df.loc[sample_name].to_dict()
+        if len(df) == 1:
+            data = [df.loc[sample_name].to_dict()]
+        else:
+            data = df.loc[sample_name].to_dict("records")
         test_name = f"T_{sample_name}"
 
         if test_folder.stem == "strength":
