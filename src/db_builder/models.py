@@ -75,31 +75,10 @@ class StrSampleProcessed(BaseModel):
     sig = FloatField(null=True)       # stress
     Sec = FloatField(null=True)       # secant modulus
 
-class StrSampleSummary(Model):
+class StrSampleSummary(BaseModel):
     sample_processed = ForeignKeyField(StrSampleProcessed, backref='summarized_samples', null=True)
     sample_name = CharField()
     str = FloatField()
-
-
-# class StrSampleSummarized(BaseModel):
-#     sample_processed = ForeignKeyField(StrSampleProcessed, backref='summarized_samples', null=True)
-#     sample_name = CharField()
-#     collection_date = DateField(null=True)
-#     depth = FloatField(null=True)
-#     notes = TextField(null=True)
-#
-#     # STR summarized test fields
-#     HR = FloatField(null=True)                 # Hardening ratio?
-#     v = FloatField(null=True)                  # Poisson's ratio?
-#     sig_b = FloatField(null=True)              # Breaking stress
-#     eps_b = FloatField(null=True)              # Breaking strain
-#     Sec_10 = FloatField(null=True)             # Secant modulus at 10%
-#     Sec_50 = FloatField(null=True)             # Secant modulus at 50%
-#     Sec_100 = FloatField(null=True)            # Secant modulus at 100%
-#     G_c = FloatField(null=True)                # Fracture energy?
-#     G_c_over_eps_b = FloatField(null=True)     # G_c / eps_b
-#     G_c_over_eps_b_sig_b = FloatField(null=True)  # G_c / (eps_b * sig_b)
-#     V_Ber = FloatField(null=True)              # Some volume metric?
 
 class FtgSampleRaw(BaseModel):
     test = ForeignKeyField(Test, backref='ftg_samples', null=True)
@@ -130,22 +109,6 @@ class FtgSampleProcessed(BaseModel):
     E_dyn = FloatField(null=True)      # dynamic modulus
     pha = FloatField(null=True)        # phase angle
 
-# class FtgSampleSummarized(BaseModel):
-#     sample_processed = ForeignKeyField(FtgSampleProcessed, backref='summarized_samples', null=True)
-#     sample_name = CharField()
-#     collection_date = DateField(null=True)
-#     depth = FloatField(null=True)
-#     notes = TextField(null=True)
-#
-#     # FTG summarized test fields
-#     sig_cyc = FloatField(null=True)    # cyclic stress
-#     sig_perm = FloatField(null=True)   # permanent stress
-#     E_ini = FloatField(null=True)      # initial modulus
-#     pha_ini = FloatField(null=True)    # initial phase angle
-#     E_50 = FloatField(null=True)       # modulus at 50% fatigue life
-#     pha_50 = FloatField(null=True)     # phase angle at 50% fatigue life
-#     N_fat = IntegerField(null=True)    # fatigue life (cycle count)
-
 class EdynSampleRaw(BaseModel):
     test = ForeignKeyField(Test, backref='Edyn_samples', null=True)
     notes = TextField(null=True)
@@ -157,12 +120,6 @@ class EdynSampleRaw(BaseModel):
     eps = FloatField(null=True)       # Strain
     E_dyn = FloatField(null=True)     # Dynamic modulus
     pha = FloatField(null=True)       # Phase angle
-
-# class EdynSampleSummarized(BaseModel):
-#     sample_raw = ForeignKeyField(EdynSampleProcessed, backref='EdynSampleRaw', null=True)
-#     sample_name = CharField()
-#     collection_date = DateField(null=True)
-#     E_dyn = FloatField(null=True)
 
 
 if __name__ == "__main__":
