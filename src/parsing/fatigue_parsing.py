@@ -4,6 +4,11 @@ import warnings
 warnings.filterwarnings("ignore")
 #from twdm import tqdm
 
+filename = r'C:\Users\inge.brijker\Infram BV\Infram Projecten - 23i740_KC WAB 2024\Uitvoering\levensduurmodel WAB\1600982\Vermoei\Analyse Vermoeiing 3pb.xlsm'
+f = pd.ExcelFile(filename)
+
+alle_sheets = f.sheet_names
+sheetnames = alle_sheets[3:]
 
 
 def read_raw_fatigue(filename, sheet):
@@ -64,14 +69,11 @@ def read_summary_fatigue (filename, sheet): #dit is summary data
     return pha_ini, pha_50, sig_cyc, sig_perm, E_ini, E_50, N_fat
 
 
-# for i, sheet in enumerate(sheetnames):
-#     read_processed_fatigue(filename, sheet)
+for i, sheet in enumerate(sheetnames):
+    read_processed_fatigue(filename, sheet)
 
 
 if __name__ == "__main__":
     
     pass
     
-
-#we willen hier ook de rest van het aflezen in staan, de locatie van waar de data nu in o9pgeslagen is, hoe we de fatigue/strength pakken
-
