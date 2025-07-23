@@ -37,6 +37,10 @@ class Sample(BaseModel):
     borehole = ForeignKeyField(Borehole, backref='samples', null=True)
     sample_name = CharField()
     depth = FloatField(null=True)
+    thickness = FloatField(null=True)  # Thickness of the sample
+    height = FloatField(null=True)
+    strength = FloatField(null=True)  # find a better name for this field
+    v = FloatField(null=True)  # find a better name for this field
     notes = TextField(null=True)
 
 class Test(BaseModel):

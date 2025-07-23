@@ -148,7 +148,7 @@ def define_sec_modulus(file_path, sheet, data, D, h):
     return sec_10, sec_50, sec_100, process_data
     
 
-def make_plot(ax, sheet, originele_data, xmean, ymean, final_line, gecorrigeerde_data,
+def make_plot(ax, borehole: str, originele_data, xmean, ymean, final_line, gecorrigeerde_data,
                 x_max, y_max, x_interp, y_interp, G):
     ax.plot(originele_data['Verplaatsing'], originele_data['Kracht'], '.', label='Originele data', color='grey')
     ax.plot(xmean, ymean, linestyle='dashed', linewidth=1, color='grey')
@@ -165,7 +165,7 @@ def make_plot(ax, sheet, originele_data, xmean, ymean, final_line, gecorrigeerde
     ax.set_ylim(0, 5.5)
     ax.set_xlabel('Verplaatsing [mm]')
     ax.set_ylabel('Kracht [kN]')
-    ax.set_title(f'{sheet} - Gc: {G:.2f} J/m2')
+    ax.set_title(f'{borehole} - Gc: {G:.2f} J/m2')
     ax.legend()
     ax.grid(alpha=0.5)
     

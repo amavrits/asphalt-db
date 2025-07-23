@@ -56,15 +56,15 @@ f = pd.ExcelFile(file_path)
 alle_sheets = f.sheet_names
 sheetnames = alle_sheets[3:]
 
-# for i, sheet in enumerate(sheetnames):
-#     plot_graph(axs[i], file_path, sheet)
+for i, sheet in enumerate(sheetnames):
+    plot_graph(axs[i], file_path, sheet)
 
 make_table_raw_data(file_path)
 make_table_processed_data(file_path, grafiektitel, sheetnames)
 make_table_summary_data(file_path, grafiektitel)
 
 
-# plt.suptitle(grafiektitel, fontsize=15)
-# plt.tight_layout(rect=[0, 0, 1, 0.98])
-# plt.show()
+plt.suptitle(grafiektitel, fontsize=15)
+plt.tight_layout(rect=[0, 0, 1, 0.98])
+plt.show()
 
