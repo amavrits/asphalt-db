@@ -1,12 +1,12 @@
 {
-  "str": [
+  "strength": [
     "F",
     "V_cor",
     "eps",
     "sig",
     "Sec"
   ],
-  "ftg": [
+  "fatigue": [
     "N",
     "eps_cycl",
     "eps_perm",
@@ -15,5 +15,5 @@
     "E_dyn",
     "pha"
   ],
-  "stf": []
+  "stiffness": []
 }

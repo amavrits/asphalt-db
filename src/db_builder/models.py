@@ -109,7 +109,7 @@ class FtgSampleProcessed(BaseModel):
     E_dyn = FloatField(null=True)      # dynamic modulus
     pha = FloatField(null=True)        # phase angle
 
-class EdynSampleRaw(BaseModel):
+class StiffnessSampleRaw(BaseModel):
     test = ForeignKeyField(Test, backref='Edyn_samples', null=True)
     notes = TextField(null=True)
     sample_name = CharField()

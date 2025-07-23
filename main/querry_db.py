@@ -1,6 +1,6 @@
 from src.db_builder.models import (
     Dike, Project, ProjectDike, Borehole, Sample, Test,
-    GeneralData, StrSampleRaw, FtgSampleRaw, EdynSampleRaw, StrSampleProcessed, FtgSampleProcessed
+    GeneralData, StrSampleRaw, FtgSampleRaw, StiffnessSampleRaw, StrSampleProcessed, FtgSampleProcessed
 )
 from src.config import DB_CONFIG
 from peewee import PostgresqlDatabase
@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     models = [
         Dike, Project, ProjectDike, Borehole, Sample, Test,
-        GeneralData, StrSampleRaw, FtgSampleRaw, EdynSampleRaw,
+        GeneralData, StrSampleRaw, FtgSampleRaw, StiffnessSampleRaw,
         StrSampleProcessed, FtgSampleProcessed
     ]
 

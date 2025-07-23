@@ -41,7 +41,7 @@ def create_tables(db, drop_tables=False):
     tables = [
         Dike, Project, ProjectDike, Borehole, Sample, Test, GeneralData,
         StrSampleRaw, StrSampleProcessed, StrSampleSummary,
-        FtgSampleRaw, FtgSampleProcessed, EdynSampleRaw
+        FtgSampleRaw, FtgSampleProcessed, StiffnessSampleRaw
     ]
     if drop_tables:
         db.drop_tables(tables, safe=True)
@@ -117,9 +117,9 @@ def add_sample_general_data(sample_name, borehole_name, project_name, master_tab
 
 
 def add_sample_test(test_name, sample_name, borehole_name, project_name, master_table, borehole_folder):
-    has_str = any((borehole_folder / "str").iterdir())
-    has_ftg = any((borehole_folder / "ftg").iterdir())
-    has_stf = any((borehole_folder / "stf").iterdir())
+    has_str = any((borehole_folder / "strength").iterdir())
+    has_ftg = any((borehole_folder / "fatigue").iterdir())
+    has_stf = any((borehole_folder / "stiffness").iterdir())
     *_, sample = resolve_sample(sample_name, borehole_name, project_name, master_table)
     Test.create(sample=sample, test_name=test_name, strength=has_str, fatigue=has_ftg, stiffness=has_stf)
 
@@ -162,19 +162,19 @@ def add_samples(borehole_name, project_name, master_table, test_folder, data_typ
         data = df.loc[sample_name].to_dict()
         test_name = f"T_{sample_name}"
 
-        if test_folder.stem == "str":
+        if test_folder.stem == "strength":
             if data_type == "raw":
                 add_test_data(StrSampleRaw, test_name, sample_name, borehole_name, project_name, master_table, data)
             elif data_type == "processed":
                 add_processed_data(StrSampleProcessed, StrSampleRaw, test_name, sample_name, borehole_name, project_name, master_table, data)
-        elif test_folder.stem == "ftg":
+        elif test_folder.stem == "fatigue":
             if data_type == "raw":
                 add_test_data(FtgSampleRaw, test_name, sample_name, borehole_name, project_name, master_table, data)
             elif data_type == "processed":
                 add_processed_data(FtgSampleProcessed, FtgSampleRaw, test_name, sample_name, borehole_name, project_name, master_table, data)
-        elif test_folder.stem == "stf":
+        elif test_folder.stem == "stiffness":
             if data_type == "raw":
-                add_test_data(EdynSampleRaw, test_name, sample_name, borehole_name, project_name, master_table, data)
+                add_test_data(StiffnessSampleRaw, test_name, sample_name, borehole_name, project_name, master_table, data)
         else:
             raise ValueError(f"Unknown test type {test_folder.stem}")
 

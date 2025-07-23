@@ -1,10 +1,10 @@
 {
-  "str": [
+  "strength": [
     "t",
     "F",
     "V_org"
   ],
-  "ftg": [
+  "fatigue": [
     "N",
     "MaximumStroke",
     "MinimumStroke",
@@ -14,7 +14,7 @@
     "InPhaseModulus",
     "OutPhaseModulus"
   ],
-  "stf": [
+  "stiffness": [
     "T",
     "f",
     "eps",

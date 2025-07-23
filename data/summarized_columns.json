@@ -1,5 +1,5 @@
 {
-  "str": [
+  "strength": [
     "HR",
     "v",
     "sig_b",
@@ -12,7 +12,7 @@
     "G_c_over_eps_b_sig_b",
     "V_Ber"
   ],
-  "ftg": [
+  "fatigue": [
     "sig_cyc",
     "sig_perm",
     "E_ini",
@@ -21,7 +21,7 @@
     "pha_50",
     "N_fat"
   ],
-  "stf": [
+  "stiffness": [
     "E_dyn"
   ]
 }
