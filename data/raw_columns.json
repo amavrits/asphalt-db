@@ -1,0 +1,24 @@
+{
+  "strength": [
+    "t",
+    "F",
+    "V_org"
+  ],
+  "fatigue": [
+    "N",
+    "MaximumStroke",
+    "MinimumStroke",
+    "PeakToPeakStroke",
+    "MaximumLoad",
+    "PeakToPeakLoad",
+    "InPhaseModulus",
+    "OutPhaseModulus"
+  ],
+  "stiffness": [
+    "T",
+    "f",
+    "eps",
+    "E_dyn",
+    "pha"
+  ]
+}
