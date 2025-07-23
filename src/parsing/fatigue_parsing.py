@@ -4,11 +4,7 @@ import warnings
 warnings.filterwarnings("ignore")
 #from twdm import tqdm
 
-filename = 'Vermoeiing vak 1 (1-8) Versie2.xlsm'
-f = pd.ExcelFile(filename)
 
-alle_sheets = f.sheet_names
-sheetname = alle_sheets[3:]
 
 def read_raw_fatigue(filename, sheet):
     # Lees sheet in vanaf rij 14 (skiprows=13), zodat index 0 == Excel rij 14
@@ -32,11 +28,26 @@ def read_raw_fatigue(filename, sheet):
 
     return ruwe_data
 
+def read_processed_fatigue (filename, sheet):
+    processed_data = pd.read_excel(filename, sheet_name=sheet, skiprows=14)
+    
+    processed_data['N'] = processed_data.iloc[:,0]
+    processed_data['eps_cycl'] = processed_data.iloc[:,1]
+    processed_data['sig_cyc'] = processed_data.iloc[:,2]
+    processed_data['sig_perm'] = processed_data.iloc[:,3]
+    processed_data['E_dyn'] = processed_data.iloc[:,4]
+    processed_data['pha'] = processed_data.iloc[:,5]
+
+    processed_data = processed_data [['N', 'eps_cycl', 'sig_cyc','sig_perm', 'E_dyn', 'pha']].copy()
+    processed_data = processed_data.dropna()
+    print (processed_data)
+    
+    return processed_data
 
 
 
-def read_summary_fatigue (filename, sheetname): #dit is summary data
-    vermoeiing = pd.read_excel(filename, sheet_name=sheetname)
+def read_summary_fatigue (filename, sheet): #dit is summary data
+    vermoeiing = pd.read_excel(filename, sheet_name=sheet)
     pha_ini = pd.to_numeric(vermoeiing.iloc[17, 9], errors='coerce')
     
     kolom1 = pd.to_numeric(vermoeiing.iloc[13:, 1], errors='coerce').dropna().reset_index(drop=True)           # Kolom 1 vanaf rij 14
@@ -53,13 +64,14 @@ def read_summary_fatigue (filename, sheetname): #dit is summary data
     return pha_ini, pha_50, sig_cyc, sig_perm, E_ini, E_50, N_fat
 
 
-for i, sheet in enumerate(sheetname):
-    read_summary_fatigue(filename, sheet)
+# for i, sheet in enumerate(sheetnames):
+#     read_processed_fatigue(filename, sheet)
 
 
 if __name__ == "__main__":
     
     pass
     
+
 #we willen hier ook de rest van het aflezen in staan, de locatie van waar de data nu in o9pgeslagen is, hoe we de fatigue/strength pakken
 
