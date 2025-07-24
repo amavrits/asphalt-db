@@ -4,7 +4,7 @@ import warnings
 warnings.filterwarnings("ignore")
 #from twdm import tqdm
 
-filename = r'C:\Users\inge.brijker\Infram BV\Infram Projecten - 23i740_KC WAB 2024\Uitvoering\levensduurmodel WAB\1600982\Vermoei\Analyse Vermoeiing 3pb.xlsm'
+filename = r'C:\Users\inge.brijker\Infram BV\Infram Projecten - 23i740_KC WAB 2024\Uitvoering\levensduurmodel WAB\1900384\Vermoeiingslijn\Vermoeiing vak 1 (1-8).xlsm'
 f = pd.ExcelFile(filename)
 
 alle_sheets = f.sheet_names
@@ -34,17 +34,18 @@ def read_raw_fatigue(filename, sheet):
     return ruwe_data
 
 def read_processed_fatigue (filename, sheet):
-    processed_data = pd.read_excel(filename, sheet_name=sheet, skiprows=14)
+    processed_data = pd.read_excel(filename, sheet_name=sheet, skiprows=12)
     
-    processed_data['N'] = processed_data.iloc[:,0]
-    processed_data['eps_cycl'] = processed_data.iloc[:,1]
-    processed_data['sig_cyc'] = processed_data.iloc[:,2]
-    processed_data['sig_perm'] = processed_data.iloc[:,3]
-    processed_data['E_dyn'] = processed_data.iloc[:,4]
-    processed_data['pha'] = processed_data.iloc[:,5]
+    processed_data['N'] = processed_data.iloc[:,2]
+    processed_data['eps_cycl'] = processed_data.iloc[:,4]
+    processed_data['sig_cyc'] = processed_data.iloc[:,5]
+    processed_data['sig_perm'] = processed_data.iloc[:,7]
+    processed_data['E_dyn'] = processed_data.iloc[:,8]
+    processed_data['pha'] = processed_data.iloc[:,9]
+    processed_data = processed_data.apply(pd.to_numeric, errors='coerce')
 
     processed_data = processed_data [['N', 'eps_cycl', 'sig_cyc','sig_perm', 'E_dyn', 'pha']].copy()
-    processed_data = processed_data.dropna()
+    processed_data = processed_data.dropna(how="all")
     print (processed_data)
     
     return processed_data
@@ -69,11 +70,10 @@ def read_summary_fatigue (filename, sheet): #dit is summary data
     return pha_ini, pha_50, sig_cyc, sig_perm, E_ini, E_50, N_fat
 
 
-# for i, sheet in enumerate(sheetnames):
-#     read_processed_fatigue(filename, sheet)
-
 
 if __name__ == "__main__":
     
     pass
     
+# for i, sheet in enumerate(sheetnames):
+#      read_processed_fatigue(filename, sheet)
