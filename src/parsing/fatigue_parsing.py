@@ -66,14 +66,9 @@ def read_summary_fatigue (filename, sheet): #dit is summary data
     E_ini = pd.to_numeric(vermoeiing.iloc[17, 8], errors='coerce') # na 50 lastherhalingen
     E_50 = pd.to_numeric(vermoeiing.iloc[index_bij_50, 8], errors='coerce') #fix calculation 50% lastherhalingen
     N_fat = pd.to_numeric(vermoeiing.iloc[5, 17], errors='coerce')
-    print (pha_ini, pha_50, sig_cyc, sig_perm, E_ini, E_50, N_fat)
     return pha_ini, pha_50, sig_cyc, sig_perm, E_ini, E_50, N_fat
-
-
 
 if __name__ == "__main__":
     
     pass
     
-# for i, sheet in enumerate(sheetnames):
-#      read_processed_fatigue(filename, sheet)

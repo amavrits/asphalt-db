@@ -7,6 +7,11 @@ from src.parsing.fatigue_parsing import read_raw_fatigue
 from src.parsing.fatigue_parsing import read_summary_fatigue
 from src.parsing.fatigue_parsing import read_processed_fatigue
 
+filename = r'C:\Users\inge.brijker\Infram BV\Infram Projecten - 23i740_KC WAB 2024\Uitvoering\levensduurmodel WAB\1900384\Vermoeiingslijn\Vermoeiing vak 1 (1-8).xlsm'
+f = pd.ExcelFile(filename)
+
+alle_sheets = f.sheet_names
+sheetnames = alle_sheets[3:]
 
 def make_table_raw_data(filename, sheetname):
     dataframes_per_sheet = {}
@@ -57,7 +62,7 @@ def make_table_summary_data (filename, sheetname):  # let op: sheetname is hier 
     E_50_lijst = []
     N_fat_lijst = []
 
-    for i, sheet in sheetname:
+    for sheet in sheetname:
         pha_ini, pha_50, sig_cyc, sig_perm, E_ini, E_50, N_fat = read_summary_fatigue(filename, sheet)
 
         sheet_lijst.append(sheet)
@@ -87,3 +92,5 @@ def make_table_summary_data (filename, sheetname):  # let op: sheetname is hier 
 
 if __name__ == "__main__":
     pass
+
+make_table_summary_data (filename, sheetnames)
