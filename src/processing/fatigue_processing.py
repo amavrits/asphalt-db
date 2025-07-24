@@ -2,7 +2,6 @@
 import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
-#from twdm import tqdm
 from src.parsing.fatigue_parsing import read_raw_fatigue
 from src.parsing.fatigue_parsing import read_summary_fatigue
 from src.parsing.fatigue_parsing import read_processed_fatigue
@@ -52,7 +51,7 @@ def make_table_processed_data(filename, sheetname):
 
     return dataframes_per_sheet
 
-def make_table_summary_data (filename, sheetname):  # let op: sheetname is hier een lijst
+def make_table_summary_data (filename, sheetname): 
     sheet_lijst = []
     pha_ini_lijst = []
     pha_50_lijst = []
@@ -92,5 +91,3 @@ def make_table_summary_data (filename, sheetname):  # let op: sheetname is hier 
 
 if __name__ == "__main__":
     pass
-
-make_table_summary_data (filename, sheetnames)
