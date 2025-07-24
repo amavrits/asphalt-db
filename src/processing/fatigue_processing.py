@@ -12,7 +12,7 @@ def make_table_raw_data(filename, sheetname):
     dataframes_per_sheet = {}
     
     for sheet in sheetname:
-        raw_data = read_raw_fatigue (filename, sheetname)
+        raw_data = read_raw_fatigue (filename, sheet)
 
         df = pd.DataFrame({
             'MaximumStroke': raw_data['MaximumStroke'],
@@ -32,7 +32,7 @@ def make_table_processed_data(filename, sheetname):
     dataframes_per_sheet = {}
 
     for sheet in sheetname:
-        processed_data = read_processed_fatigue (filename, sheetname)
+        processed_data = read_processed_fatigue (filename, sheet)
                                               
         df = pd.DataFrame({
             'N': processed_data['N'],
