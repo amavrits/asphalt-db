@@ -26,7 +26,6 @@ def make_table_raw_data(filename, sheetname):
         
         dataframes_per_sheet[sheet] = df
  
- 
     return dataframes_per_sheet
 
 def make_table_processed_data(filename, sheetname):
