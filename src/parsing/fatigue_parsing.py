@@ -69,8 +69,8 @@ def read_summary_fatigue (filename, sheet): #dit is summary data
     return pha_ini, pha_50, sig_cyc, sig_perm, E_ini, E_50, N_fat
 
 
-for i, sheet in enumerate(sheetnames):
-    read_processed_fatigue(filename, sheet)
+# for i, sheet in enumerate(sheetnames):
+#     read_processed_fatigue(filename, sheet)
 
 
 if __name__ == "__main__":
