@@ -3,13 +3,6 @@ import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
 
-filename = r'C:\Users\inge.brijker\Infram BV\Infram Projecten - 23i740_KC WAB 2024\Uitvoering\levensduurmodel WAB\1900384\Vermoeiingslijn\Vermoeiing vak 1 (1-8).xlsm'
-f = pd.ExcelFile(filename)
-
-alle_sheets = f.sheet_names
-sheetnames = alle_sheets[3:]
-
-
 def read_raw_fatigue(filename, sheet):
     ruwe_data = pd.read_excel(filename, sheet_name=sheet, skiprows=14)
     

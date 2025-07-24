@@ -6,12 +6,6 @@ from src.parsing.fatigue_parsing import read_raw_fatigue
 from src.parsing.fatigue_parsing import read_summary_fatigue
 from src.parsing.fatigue_parsing import read_processed_fatigue
 
-filename = r'C:\Users\inge.brijker\Infram BV\Infram Projecten - 23i740_KC WAB 2024\Uitvoering\levensduurmodel WAB\1900384\Vermoeiingslijn\Vermoeiing vak 1 (1-8).xlsm'
-f = pd.ExcelFile(filename)
-
-alle_sheets = f.sheet_names
-sheetnames = alle_sheets[3:]
-
 def make_table_raw_data(filename, sheetname):
     dataframes_per_sheet = {}
     
