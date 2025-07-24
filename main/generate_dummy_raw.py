@@ -12,7 +12,9 @@ if __name__ == "__main__":
     n_dikes = 3
     n_projects = 1
     n_bhs = 8
-    n_samples = 1
+    n_samples = 10
+
+    #TODO: change the folder structure so that we remove the folder strength/fatigue/stiffness and have files raw_strength.csv, processed_strength.csv, etc.
 
     SCRIPT_DIR = Path(__file__).parent
     base_folder = SCRIPT_DIR.parent / "data/dummy2"
