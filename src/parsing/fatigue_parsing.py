@@ -27,13 +27,14 @@ def read_processed_fatigue (filename, sheet):
     
     processed_data['N'] = processed_data.iloc[:,2]
     processed_data['eps_cycl'] = processed_data.iloc[:,4]
+    processed_data['eps_perm'] = processed_data.iloc[:,5]
     processed_data['sig_cyc'] = processed_data.iloc[:,6]
     processed_data['sig_perm'] = processed_data.iloc[:,7]
     processed_data['E_dyn'] = processed_data.iloc[:,8]
     processed_data['pha'] = processed_data.iloc[:,9]
     processed_data = processed_data.apply(pd.to_numeric, errors='coerce')
 
-    processed_data = processed_data [['N', 'eps_cycl', 'sig_cyc','sig_perm', 'E_dyn', 'pha']].copy()
+    processed_data = processed_data [['N', 'eps_cycl', 'eps_perm', 'sig_cyc','sig_perm', 'E_dyn', 'pha']].copy()
     processed_data = processed_data.dropna(how="all")
     print (processed_data)
     

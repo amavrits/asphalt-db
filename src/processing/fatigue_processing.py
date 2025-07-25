@@ -13,16 +13,22 @@ def make_table_raw_data(filename, sheetname):
         raw_data = read_raw_fatigue (filename, sheet)
 
         df = pd.DataFrame({
+            'sample_name': 'S_1',
+            'N': 0,  # What is N ???
             'MaximumStroke': raw_data['MaximumStroke'],
             'MinimumStroke': raw_data['MinimumStroke'],
             'PeakToPeakStroke': raw_data['PeakToPeakStroke'],
             'MaximumLoad': raw_data['MaximumLoad'],
             'PeakToPeakLoad': raw_data['PeakToPeakLoad'],
             'InPhaseModulus': raw_data['InPhaseModulus'],
-            'OutPhaseModulus': raw_data['OutPhaseModulus'],   
+            'OutPhaseModulus': raw_data['OutPhaseModulus'],
+            'notes': ''
         })
         
         dataframes_per_sheet[sheet] = df
+
+        df.to_csv(f'{sheet}_fatigue_raw_data.csv', index=False)
+
  
     return dataframes_per_sheet
 
@@ -33,15 +39,21 @@ def make_table_processed_data(filename, sheetname):
         processed_data = read_processed_fatigue (filename, sheet)
                                               
         df = pd.DataFrame({
+            'sample_name': "S_1",
             'N': processed_data['N'],
             'eps_cycl': processed_data['eps_cycl'],
+            'eps_perm': processed_data['eps_perm'],
             'sig_cyc': processed_data['sig_cyc'],
             'sig_perm': processed_data['sig_perm'],
             'E_dyn': processed_data['E_dyn'],
             'pha': processed_data['pha'],
+            'notes': '',
         })
-        
+        # Cut df where eps_cycl is NaN
+        df = df.dropna(subset=['eps_cycl'])
+
         dataframes_per_sheet[sheet] = df
+        df.to_csv(f'{sheet}_fatigue_processed_data.csv', index=False)
 
     return dataframes_per_sheet
 
@@ -80,6 +92,7 @@ def make_table_summary_data (filename, sheetname):
     })
 
     tabel_samenvatting_data = resultaten_df.sort_values(by='Proefstuk', ascending=True)
+    tabel_samenvatting_data.to_csv('fatigue_summary_data.csv', index=False)
     print(tabel_samenvatting_data)
     return  
 

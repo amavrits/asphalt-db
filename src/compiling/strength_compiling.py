@@ -17,9 +17,7 @@ from src.processing.strength_processing import plot_graph, make_table_summary_da
 
 
 #INVOER
-file_path = Path(r'c:\Users\hauth\OneDrive - Stichting Deltares\Documents\Analyse Bezwijksterkte 3pb_vak1.xlsm')
-# file_path = r'C:\Users\marloes.slokker\Infram BV\Infram Projecten - 23i741_KC WAB 2024 - WP 7 en 8\Uitvoering\Fase 1 - KCW (WP 7-1)\Data KCW 3PB - nagestuurde excels Kiwa KOAC\Data KCW 3PB\Fase 1\Analyse Bezwijksterkte 3pb_1_8.xlsm'
-# main_path = r'C:\Users\marloes.slokker\Infram BV\Infram Projecten - 23i740_KC WAB 2024\Uitvoering\levensduurmodel WAB'
+file_path = Path(r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\Analyse Bezwijksterkte 3pb_vak1.xlsm')
 # main_path = Path(main_path)
 
 # project_folders = [folder for folder in main_path.iterdir()]

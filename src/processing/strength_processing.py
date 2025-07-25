@@ -249,7 +249,7 @@ def make_table_summary_data(file_path, grafiektitel):
     'notes': '',
     })
     tabel= resultaten_df.sort_values(by='Proefstuk',ascending=True)
-    tabel.to_csv(f'_summarized_data.csv', index=False)
+    tabel.to_csv(f'_strength_summarized_data.csv', index=False)
 
     print(tabel)
     
@@ -272,7 +272,7 @@ def make_table_raw_data(file_path):
 
         # Maak een dataframe voor deze sheet
         df = pd.DataFrame({
-            'sample_name': sheet,
+            'sample_name': "S_1",
             't': raw_data['tijd'],
             'F': raw_data['kracht'],
             'V_org': raw_data['verplaatsing'],
@@ -288,7 +288,7 @@ def make_table_raw_data(file_path):
         print(df.head(), "\n")
 
         ## save as csv
-        df.to_csv(f'{naam}_raw_data.csv', index=False)
+        df.to_csv(f'{naam}_strength_raw_data.csv', index=False)
 
     return dataframes_per_sheet
 
@@ -318,7 +318,7 @@ def make_table_processed_data(file_path, grafiektitel, sheet):
         # Maak een dataframe voor deze sheet
 
         df = pd.DataFrame({
-            'sample_name': sheet,
+            'sample_name': "S_1",
             'F': gecorrigeerde_data['Kracht'],
             # 'V_org': raw_data['verplaatsing'],
             'V_cor': verplaatsing_corr,
@@ -336,7 +336,7 @@ def make_table_processed_data(file_path, grafiektitel, sheet):
         print(f"Proefstuk: {naam}")
         print(df.head(), "\n")
 
-        df.to_csv(f'{naam}_processed_data.csv', index=False)
+        df.to_csv(f'{naam}_strength_processed_data.csv', index=False)
 
 
     return dataframes_per_sheet

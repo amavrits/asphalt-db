@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
+from pathlib import Path
+
 import pandas as pd
 import warnings
-warnings.filterwarnings("ignore")
 from src.processing.fatigue_processing import make_table_raw_data
 from src.processing.fatigue_processing import make_table_summary_data
 from src.processing.fatigue_processing import make_table_processed_data
+warnings.filterwarnings("ignore")
 
-filename = r'C:\Users\inge.brijker\Infram BV\Infram Projecten - 23i740_KC WAB 2024\Uitvoering\levensduurmodel WAB\1900384\Vermoeiingslijn\Vermoeiing vak 1 (1-8).xlsm'
+filename = Path(r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\Vermoeiing vak 1 (1-8).xlsm')
 
 def main():
     f = pd.ExcelFile(filename)
