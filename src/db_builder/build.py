@@ -129,7 +129,6 @@ def add_test_data(model_cls, test_name, sample_name, borehole_name, project_name
     test = Test.get(test_name=test_name, sample=sample)
     for row in test_data:
         model_cls.create(test=test, sample_name=sample_name, **row)
-    print(1, test_name, sample_name, borehole_name, project_name)
 
 
 def add_processed_data(model_cls, raw_cls, test_name, sample_name, borehole_name, project_name, master_table, test_data):
@@ -138,15 +137,14 @@ def add_processed_data(model_cls, raw_cls, test_name, sample_name, borehole_name
     sample_raw = raw_cls.get(test=test, sample_name=sample_name)
     for row in test_data:
         model_cls.create(sample_raw=sample_raw, sample_name=sample_name, **row)
-    a=1
 
 
-def add_str_summarized(test_name, sample_name, borehole_name, project_name, master_table, test_data):
+def add_summarized_data(model_cls, test_name, sample_name, borehole_name, project_name, master_table, test_data):
     *_, sample = resolve_sample(sample_name, borehole_name, project_name, master_table)
     test = Test.get(test_name=test_name, sample=sample)
-    sample_raw = StrSampleRaw.get(test=test, sample_name=sample_name)
-    sample_processed = StrSampleProcessed.get(sample_raw=sample_raw, sample_name=sample_name)
-    StrSummary.create(sample_name=sample_name, sample_processed=sample_processed, str=test_data["str"])
+
+    for row in test_data:  # In principle only one row
+        model_cls.create(test=test, sample_name=sample_name, **row)
 
 
 def iter_dikes(project_name, master_table, dike_table):
@@ -176,6 +174,9 @@ def add_samples(borehole_name, project_name, master_table, test_folder, data_typ
             elif data_type == "processed":
                 print("Adding processed strength data strength")
                 add_processed_data(StrSampleProcessed, StrSampleRaw, test_name, sample_name, borehole_name, project_name, master_table, data)
+            elif data_type == "summarized":
+                print("Adding strength summary data")
+                add_summarized_data(StrSummary, test_name, sample_name, borehole_name, project_name, master_table, data)
         elif test_folder.stem == "fatigue":
             if data_type == "raw":
                 print("Adding raw fatigue data")
@@ -183,6 +184,9 @@ def add_samples(borehole_name, project_name, master_table, test_folder, data_typ
             elif data_type == "processed":
                 print("Adding processed fatigue data")
                 add_processed_data(FtgSampleProcessed, FtgSampleRaw, test_name, sample_name, borehole_name, project_name, master_table, data)
+            elif data_type == "summarized":
+                print("Adding fatigue summary data")
+                add_summarized_data(FtgSummary, test_name, sample_name, borehole_name, project_name, master_table, data)
         elif test_folder.stem == "stiffness":
             if data_type == "raw":
                 print("Adding raw stiffness data")

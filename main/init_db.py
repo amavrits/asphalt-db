@@ -35,33 +35,37 @@ if __name__ == "__main__":
         for borehole_folder in project_folder.iterdir():
 
             if borehole_folder.is_file():
+                # # Process summary file:
+                # test_name, sample_name, borehole_name, project_name, master_table, test_data
+                # add_str_summarized()
                 continue
+            else:
 
-            borehole_name = borehole_folder.stem
+                borehole_name = borehole_folder.stem
 
-            with open(borehole_folder/"borehole_data.json", "r") as f:
-                borehole_data = json.load(f)
+                with open(borehole_folder/"borehole_data.json", "r") as f:
+                    borehole_data = json.load(f)
 
-            add_borehole(borehole_name, project_name, master_table, borehole_data)
+                add_borehole(borehole_name, project_name, master_table, borehole_data)
 
-            with open(borehole_folder / "sample_data.json", "r") as f:
-                sample_data = json.load(f)
+                with open(borehole_folder / "sample_data.json", "r") as f:
+                    sample_data = json.load(f)
 
-            for (sample_name, data) in sample_data.items():
+                for (sample_name, data) in sample_data.items():
 
-                add_sample(sample_name, borehole_name, project_name, master_table, data)
+                    add_sample(sample_name, borehole_name, project_name, master_table, data)
 
-                add_sample_general_data(sample_name, borehole_name, project_name, master_table, general_data)
+                    add_sample_general_data(sample_name, borehole_name, project_name, master_table, general_data)
 
-                test_name = f"T_{sample_name}"
-                add_sample_test(test_name, sample_name, borehole_name, project_name, master_table, borehole_folder)
+                    test_name = f"T_{sample_name}"
+                    add_sample_test(test_name, sample_name, borehole_name, project_name, master_table, borehole_folder)
 
-            test_folder_list = [file for file in borehole_folder.iterdir() if file.name.split(".")[-1] != "json"]
+                test_folder_list = [file for file in borehole_folder.iterdir() if file.name.split(".")[-1] != "json"]
 
-            for test_folder in test_folder_list:
+                for test_folder in test_folder_list:
 
-                for data_type in ["raw", "processed"]:
-                    add_samples(borehole_name, project_name, master_table, test_folder, data_type)
+                    for data_type in ["raw", "processed", "summarized"]:
+                        add_samples(borehole_name, project_name, master_table, test_folder, data_type)
 
     db.close()
 
