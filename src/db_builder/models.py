@@ -79,10 +79,14 @@ class StrSampleProcessed(BaseModel):
     sig = FloatField(null=True)       # stress
     Sec = FloatField(null=True)       # secant modulus
 
-class StrSampleSummary(BaseModel):
+class StrSummary(BaseModel):
     sample_processed = ForeignKeyField(StrSampleProcessed, backref='summarized_samples', null=True)
     sample_name = CharField()
     str = FloatField()
+    sig_b = FloatField()
+    eps_b = FloatField()
+    V_Ber = FloatField()
+
 
 class FtgSampleRaw(BaseModel):
     test = ForeignKeyField(Test, backref='ftg_samples', null=True)
@@ -112,6 +116,17 @@ class FtgSampleProcessed(BaseModel):
     sig_perm = FloatField(null=True)   # permanent stress
     E_dyn = FloatField(null=True)      # dynamic modulus
     pha = FloatField(null=True)        # phase angle
+
+class FtgSummary(BaseModel):
+    test = ForeignKeyField(Test, backref='str_samples_summary', null=True)
+    sample_name = CharField()
+    pha_ini = FloatField()  # Initial phase angle
+    pha_50 = FloatField()  # Phase angle at 50% of cycles
+    sig_cyc = FloatField()  # Cyclic stress
+    sig_perm = FloatField()  # Permanent stress
+    E_ini = FloatField()  # Initial dynamic modulus
+    E_50 = FloatField()  # Dynamic modulus at 50% of cycles
+    N_fat = IntegerField()  # Number of fatigue cycles
 
 class StiffnessSampleRaw(BaseModel):
     test = ForeignKeyField(Test, backref='Edyn_samples', null=True)

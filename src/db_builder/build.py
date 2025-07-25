@@ -40,8 +40,8 @@ def create_db(db_config):
 def create_tables(db, drop_tables=False):
     tables = [
         Dike, Project, ProjectDike, Borehole, Sample, Test, GeneralData,
-        StrSampleRaw, StrSampleProcessed, StrSampleSummary,
-        FtgSampleRaw, FtgSampleProcessed, StiffnessSampleRaw
+        StrSampleRaw, StrSampleProcessed, StrSummary,
+        FtgSampleRaw, FtgSampleProcessed, FtgSummary, StiffnessSampleRaw
     ]
     if drop_tables:
         db.drop_tables(tables, safe=True)
@@ -138,6 +138,7 @@ def add_processed_data(model_cls, raw_cls, test_name, sample_name, borehole_name
     sample_raw = raw_cls.get(test=test, sample_name=sample_name)
     for row in test_data:
         model_cls.create(sample_raw=sample_raw, sample_name=sample_name, **row)
+    a=1
 
 
 def add_str_summarized(test_name, sample_name, borehole_name, project_name, master_table, test_data):
@@ -145,7 +146,7 @@ def add_str_summarized(test_name, sample_name, borehole_name, project_name, mast
     test = Test.get(test_name=test_name, sample=sample)
     sample_raw = StrSampleRaw.get(test=test, sample_name=sample_name)
     sample_processed = StrSampleProcessed.get(sample_raw=sample_raw, sample_name=sample_name)
-    StrSampleSummary.create(sample_name=sample_name, sample_processed=sample_processed, str=test_data["str"])
+    StrSummary.create(sample_name=sample_name, sample_processed=sample_processed, str=test_data["str"])
 
 
 def iter_dikes(project_name, master_table, dike_table):
@@ -160,7 +161,6 @@ def add_samples(borehole_name, project_name, master_table, test_folder, data_typ
     df = pd.read_csv(test_folder / f"{data_type}_data.csv", index_col="sample_name")
     with open(test_folder / "test_data.json", "r") as f:
         test_data = json.load(f)
-
     for sample_name in df.index.unique():
         print(borehole_name, sample_name)
         if len(df) == 1:
