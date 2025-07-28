@@ -13,7 +13,7 @@ def make_table_raw_data(filename, sheetname):
         raw_data = read_raw_fatigue (filename, sheet)
 
         df = pd.DataFrame({
-            'sample_name': 'S_1',
+            'sample_name': sheet,
             'N': 0,  # What is N ???
             'MaximumStroke': raw_data['MaximumStroke'],
             'MinimumStroke': raw_data['MinimumStroke'],
@@ -39,7 +39,7 @@ def make_table_processed_data(filename, sheetname):
         processed_data = read_processed_fatigue (filename, sheet)
                                               
         df = pd.DataFrame({
-            'sample_name': "S_1",
+            'sample_name': sheet,
             'N': processed_data['N'],
             'eps_cycl': processed_data['eps_cycl'],
             'eps_perm': processed_data['eps_perm'],
@@ -81,7 +81,7 @@ def make_table_summary_data (filename, sheetname):
         
 
     resultaten_df = pd.DataFrame({
-        'Proefstuk': sheet_lijst,
+        'sample_name': sheet_lijst,
         'pha_ini': pha_ini_lijst,
         'pha_50': pha_50_lijst,
         'sig_cyc': sig_cyc_lijst,
@@ -91,7 +91,7 @@ def make_table_summary_data (filename, sheetname):
         'N_fat': N_fat_lijst
     })
 
-    tabel_samenvatting_data = resultaten_df.sort_values(by='Proefstuk', ascending=True)
+    tabel_samenvatting_data = resultaten_df.sort_values(by='sample_name', ascending=True)
     tabel_samenvatting_data.to_csv('fatigue_summary_data.csv', index=False)
     print(tabel_samenvatting_data)
     return  

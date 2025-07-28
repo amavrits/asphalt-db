@@ -96,6 +96,7 @@ class StrSummary(BaseModel):
     V_Ber = FloatField()
 
 
+
 class FtgSampleRaw(BaseModel):
     test = ForeignKeyField(Test, backref='ftg_samples', null=True)
     notes = TextField(null=True)

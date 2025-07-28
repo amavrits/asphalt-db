@@ -12,8 +12,8 @@ from src.processing.strength_processing import calc_fracture_data, calc_linear_f
 
 
 
-borehole = "1B"
-sample = "S_1"
+borehole = "BH1"
+sample = "1B"
 
 
 db_config = DB_CONFIG

@@ -242,8 +242,8 @@ def make_table_summary_data(file_path, grafiektitel):
     'Sec_50': sec50_lijst,
     'Sec_100': sec100_lijst,    
     'G_c': breukenergie_lijst,
-    'G_c/eps_b': Gc_rek_lijst,
-    'Gc/(eps_b.sig_b)': Gc_rek_sig_lijst,
+    'G_c_over_eps_b': Gc_rek_lijst,
+    'G_c_over_eps_b_sig_b': Gc_rek_sig_lijst,
     'V_Ber': vormfactor_lijst,
     'sample_name': sheet_lijst,
     'notes': '',
@@ -272,7 +272,7 @@ def make_table_raw_data(file_path):
 
         # Maak een dataframe voor deze sheet
         df = pd.DataFrame({
-            'sample_name': "S_1",
+            'sample_name': sheet,
             't': raw_data['tijd'],
             'F': raw_data['kracht'],
             'V_org': raw_data['verplaatsing'],
@@ -318,7 +318,7 @@ def make_table_processed_data(file_path, grafiektitel, sheet):
         # Maak een dataframe voor deze sheet
 
         df = pd.DataFrame({
-            'sample_name': "S_1",
+            'sample_name': sheet,
             'F': gecorrigeerde_data['Kracht'],
             # 'V_org': raw_data['verplaatsing'],
             'V_cor': verplaatsing_corr,
