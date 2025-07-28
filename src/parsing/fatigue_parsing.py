@@ -18,7 +18,6 @@ def read_raw_fatigue(filename, sheet):
     ruwe_data = ruwe_data [['MaximumStroke', 'MinimumStroke', 'PeakToPeakStroke',
                             'MaximumLoad', 'PeakToPeakLoad', 'InPhaseModulus', 'OutPhaseModulus']].copy()
     ruwe_data = ruwe_data.dropna()
-    print (ruwe_data)
 
     return ruwe_data
 
@@ -36,8 +35,7 @@ def read_processed_fatigue (filename, sheet):
 
     processed_data = processed_data [['N', 'eps_cycl', 'eps_perm', 'sig_cyc','sig_perm', 'E_dyn', 'pha']].copy()
     processed_data = processed_data.dropna(how="all")
-    print (processed_data)
-    
+
     return processed_data
 
 def read_summary_fatigue (filename, sheet):

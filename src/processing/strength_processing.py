@@ -288,7 +288,7 @@ def make_table_raw_data(file_path):
         print(df.head(), "\n")
 
         ## save as csv
-        df.to_csv(f'{naam}_strength_raw_data.csv', index=False)
+        # df.to_csv(f'{naam}_strength_raw_data.csv', index=False)
 
     return dataframes_per_sheet
 

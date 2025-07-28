@@ -7,7 +7,6 @@ import psycopg
 from src.db_builder.models import *
 
 from src.config import DB_CONFIG
-from src.parsing.strength_parsing import read_data, read_parameters
 from src.processing.strength_processing import calc_fracture_data, calc_linear_fit, correct_data, make_plot
 
 
