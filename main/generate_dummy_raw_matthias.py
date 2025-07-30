@@ -14,21 +14,20 @@ from src.parsing.strength_parsing import read_data, read_parameters
 from src.processing.strength_processing import make_table_raw_data, calc_linear_fit, correct_data, define_sec_modulus, \
     calc_fracture_data
 
-def fill_master_table_data(project: int, vak_name: str, borehole_id_list: list[int], master_table_data: list) -> list:
 
+def fill_master_table_data(project: int, vak_name: str, borehole_id_list: list[int], master_table_data: list) -> list:
     for borehole_id in borehole_id_list:
         master_table_data.append(
             [f"P_{project}", f"BH{borehole_id}", f"{vak_name}"]
         )
     return master_table_data
 
-def fill_general_table_data(project_id: int, samples_strength: list[str], samples_fatigue: list[str], general_table_data: list):
 
-    for sample_str, sample_fat in zip(samples_strength, samples_fatigue):
-        borehole_id = re.match(r'(\d+)B', sample_str).group(1)
-        general_table_data.append([f"P_{project_id}", f"BH_{borehole_id}", sample_str, 0])
-        general_table_data.append([f"P_{project_id}", f"BH_{borehole_id}", sample_fat, 0])
+def fill_general_table_data(project_id: int, borehole_id, general_table_data: list):
+    general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", f"{borehole_id}B", 0])
+    general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", f"{borehole_id}V", 0])
     return general_table_data
+
 
 def fill_project_data_csv(base_folder: Path, project_names):
     n_projects = len(project_names)
@@ -41,7 +40,8 @@ def fill_project_data_csv(base_folder: Path, project_names):
     df_projects = pd.DataFrame(data=project_data)
     df_projects.to_csv(base_folder.joinpath("project_table.csv"), index=False)
 
-def fill_dike_data_table_df(base_folder: Path, vak_dict:dict):
+
+def fill_dike_data_table_df(base_folder: Path, vak_dict: dict):
     dike_names = list(vak_dict.keys())
     n_dikes = len(dike_names)
     dike_data = {
@@ -51,6 +51,7 @@ def fill_dike_data_table_df(base_folder: Path, vak_dict:dict):
     }
     df_dikes = pd.DataFrame(data=dike_data)
     df_dikes.to_csv(base_folder.joinpath("dike_table.csv"), index=False)
+
 
 def fill_borehole_data_csv(borehole_path: Path, borehole_name: str):
     borehole_data = {
@@ -63,9 +64,8 @@ def fill_borehole_data_csv(borehole_path: Path, borehole_name: str):
     with open(borehole_path.joinpath("borehole_data.json"), "w") as f:
         json.dump(borehole_data, f, indent=4)
 
+
 def fill_sample_data_csv(borehole_path: Path, borehole_id, strength_file: Path):
-
-
     D, h, strength, v = read_parameters(strength_file, f"{borehole_id}B")
 
     sample_data = {f"{borehole_id}B": {
@@ -93,6 +93,7 @@ def fill_sample_data_csv(borehole_path: Path, borehole_id, strength_file: Path):
 
     with open(borehole_path / "sample_data.json", "w") as f:
         json.dump(sample_data, f, indent=4)
+
 
 def fill_strength_data_csv(borehole_path: Path, sample_name: str, file_path: Path):
     """
@@ -149,8 +150,9 @@ def fill_strength_data_csv(borehole_path: Path, sample_name: str, file_path: Pat
     df_summarized = pd.DataFrame({
         'sample_name': sample_name,
         'HR': 0,  # TODO ??
+
         'v': v,
-        'sig_b': strength, # TODO: find a better name
+        'sig_b': strength,  # TODO: find a better name
         'eps_b': rek_max,
         'Sec_10': sec_10,
         'Sec_50': sec_50,
@@ -163,6 +165,7 @@ def fill_strength_data_csv(borehole_path: Path, sample_name: str, file_path: Pat
     }, index=[0])
     tabel = df_summarized.sort_values(by='sample_name', ascending=True)
     tabel.to_csv(test_path / f"summarized_data.csv", index=False)
+
 
 def fill_fatigue_data_csv(borehole_path, sample_name: str, file_path: Path):
     """
@@ -227,8 +230,21 @@ def fill_fatigue_data_csv(borehole_path, sample_name: str, file_path: Path):
     df_summarized = df_summarized.sort_values(by='sample_name', ascending=True)
     df_summarized.to_csv(test_path / f"summarized_data.csv", index=False)
 
-def fill_stiffness_data_csv():
-    pass
+
+def fill_stiffness_data_csv(borehole_path):
+    test_path = borehole_path / f"stiffness"
+    test_path.mkdir(exist_ok=True, parents=True)
+
+def add_test_data_json():
+    test_data = {
+        "str_appratus": "A",
+        "ftg_appratus": "B",
+        "stiff_appratus": "C",
+        "notes": ["DDDDDD"],
+    }
+
+    with open(test_path / "test_data.json", "w") as f:
+        json.dump(test_data, f, indent=4)
 
 
 if __name__ == "__main__":
@@ -238,11 +254,10 @@ if __name__ == "__main__":
 
     SCRIPT_DIR = Path(__file__).parent
     base_folder = SCRIPT_DIR.parent / "data/automated_data"
-    input_files_folder = Path(r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data1')
+    input_files_folder = Path(r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data1') # make the path a env variable
     if base_folder.is_dir():
         shutil.rmtree(base_folder)
     base_folder.mkdir(exist_ok=True, parents=True)
-
 
     fill_project_data_csv(base_folder, [f"P_{i}" for i in range(1, n_projects + 1)])
     for project in range(1, n_projects + 1):
@@ -285,7 +300,6 @@ if __name__ == "__main__":
             n_bhs = len(sample_name_strength)
 
             fill_master_table_data(project, vak_name, list(nums_b), master_table_data)
-            fill_general_table_data(project, sample_name_strength, sample_name_fatigue, general_table_data)
 
             borehole_ids = nums_b
             for borehole_id in borehole_ids:
@@ -296,12 +310,11 @@ if __name__ == "__main__":
 
                 fill_borehole_data_csv(borehole_path, borehole_name)
                 fill_sample_data_csv(borehole_path, borehole_id, strength_file)
-
+                fill_general_table_data(project, borehole_id, general_table_data)
 
                 fill_strength_data_csv(borehole_path, f"{borehole_id}B", strength_file)
                 fill_fatigue_data_csv(borehole_path, f"{borehole_id}V", fatigue_file)
-                fill_stiffness_data_csv()
-
+                fill_stiffness_data_csv(borehole_path)
 
         master_table_df = pd.DataFrame(master_table_data, columns=["project", "borehole", "dike"])
         master_table_df.to_csv(base_folder.joinpath("master_table.csv"), index=False)
@@ -310,8 +323,6 @@ if __name__ == "__main__":
         general_data_df = general_data_df.drop_duplicates(subset=["project", "borehole", "sample"])
 
         general_data_df.to_csv(base_folder.joinpath("general_data.csv"), index=False)
-
-
 
     toc = time.time()
     print(f"Time taken: {toc - tic:.2f} seconds")

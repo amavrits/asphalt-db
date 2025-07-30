@@ -39,6 +39,7 @@ query_strength_data =  (
     .join(Project)
     .where(
         (Project.project_name == project)
+        # (Borehole.borehole_name == "BH1")
     )
 )
 
@@ -77,12 +78,18 @@ print(data_ftg)
 
 # plot
 plt.figure(figsize=(10, 6))
-borehole = [1,2,3,4]
+borehole = [1,2,3,4,5,6,7,8]
 
 plt.plot(data_str[0]["sig_b"], data_ftg[0]["pha_ini"], 'o', label=f'Borehole {borehole[0]}')
 plt.plot(data_str[1]["sig_b"], data_ftg[1]["pha_ini"], 'o', label=f'Borehole {borehole[1]}')
 plt.plot(data_str[2]["sig_b"], data_ftg[2]["pha_ini"], 'o', label=f'Borehole {borehole[2]}')
 plt.plot(data_str[3]["sig_b"], data_ftg[3]["pha_ini"], 'o', label=f'Borehole {borehole[3]}')
+plt.plot(data_str[4]["sig_b"], data_ftg[4]["pha_ini"], 'o', label=f'Borehole {borehole[4]}')
+plt.plot(data_str[5]["sig_b"], data_ftg[5]["pha_ini"], 'o', label=f'Borehole {borehole[5]}')
+plt.plot(data_str[6]["sig_b"], data_ftg[6]["pha_ini"], 'o', label=f'Borehole {borehole[6]}')
+plt.plot(data_str[7]["sig_b"], data_ftg[7]["pha_ini"], 'o', label=f'Borehole {borehole[7]}')
+
+
 
 plt.title(f"Strength vs Fatigue for project 1900384")
 plt.xlabel("Strength (sig_b)")
