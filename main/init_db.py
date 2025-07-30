@@ -6,6 +6,8 @@ from src.db_builder.utils import *
 from pathlib import Path
 import json
 
+import psycopg2
+
 
 if __name__ == "__main__":
 

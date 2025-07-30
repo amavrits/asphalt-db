@@ -235,21 +235,20 @@ def fill_stiffness_data_csv(borehole_path):
     test_path = borehole_path / f"stiffness"
     test_path.mkdir(exist_ok=True, parents=True)
 
-def add_test_data_json():
-    test_data = {
-        "str_appratus": "A",
-        "ftg_appratus": "B",
-        "stiff_appratus": "C",
-        "notes": ["DDDDDD"],
-    }
-
-    with open(test_path / "test_data.json", "w") as f:
-        json.dump(test_data, f, indent=4)
+# def add_test_data_json():
+#     test_data = {
+#         "str_appratus": "A",
+#         "ftg_appratus": "B",
+#         "stiff_appratus": "C",
+#         "notes": ["DDDDDD"],
+#     }
+#     # TODO
+#     with open(test_path / "test_data.json", "w") as f:
+#         json.dump(test_data, f, indent=4)
 
 
 if __name__ == "__main__":
     tic = time.time()
-    n_dikes = 3
     n_projects = 1
 
     SCRIPT_DIR = Path(__file__).parent
@@ -273,6 +272,8 @@ if __name__ == "__main__":
                 vak_dict[vak]["strength"] = file
             elif "Vermoeiing" in filename:
                 vak_dict[vak]["fatigue"] = file
+            elif 'master' in filename:
+                continue
 
         # Loop over all the dike
         master_table_data = []
@@ -289,19 +290,25 @@ if __name__ == "__main__":
             sample_name_fatigue = pd.ExcelFile(fatigue_file).sheet_names[3:]
 
             # Validation of sample names for the current vak
-            if len(sample_name_strength) != len(sample_name_fatigue):
-                raise ValueError("Number of samples in strength and fatigue files do not match.")
+            # if len(sample_name_strength) != len(sample_name_fatigue):
+            #     raise ValueError("Number of samples in strength and fatigue files do not match.")
 
-            nums_b = {re.match(r'(\d+)B$', item).group(1) for item in sample_name_strength if re.match(r'\d+B$', item)}
-            nums_v = {re.match(r'(\d+)V$', item).group(1) for item in sample_name_fatigue if re.match(r'\d+V$', item)}
+            # nums_b = {re.match(r'(\d+)B$', item).group(1) for item in sample_name_strength if re.match(r'\d+B$', item)}
+            # nums_v = {re.match(r'(\d+)V$', item).group(1) for item in sample_name_fatigue if re.match(r'\d+V$', item)}
 
-            if len(nums_b) != len(nums_v):
-                raise ValueError("Borehole ids are not matching")
-            n_bhs = len(sample_name_strength)
+            # if len(nums_b) != len(nums_v):
+            #     raise ValueError("Borehole ids are not matching")
+            # n_bhs = len(sample_name_strength)
+            strength_sample_ids = {re.match(r'(\d+)', item).group(1) for item in sample_name_strength}
+            fatigue_sample_ids = {re.match(r'(\d+)', item).group(1) for item in sample_name_fatigue}
+            borehole_ids = list(set(list(strength_sample_ids) + list(fatigue_sample_ids)))
 
-            fill_master_table_data(project, vak_name, list(nums_b), master_table_data)
 
-            borehole_ids = nums_b
+            fill_master_table_data(project, vak_name, list(borehole_ids), master_table_data)
+            #There can be one borehole without strength because the test was bad or something.
+
+
+
             for borehole_id in borehole_ids:
                 borehole_name = f"BH{borehole_id}"
 
