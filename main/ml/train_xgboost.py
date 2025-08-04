@@ -74,12 +74,12 @@ if __name__ == "__main__":
     }
 
     # Randomized Search with Early Stopping
-    xgb_model = xgb.XGBRegressor(objective='reg:squarederror')
+    xgb_model = xgb.XGBRegressor(objective="reg:squarederror")
     search = RandomizedSearchCV(
         xgb_model,
         param_distributions=param_grid,
         n_iter=50,
-        scoring='neg_root_mean_squared_error',
+        scoring="neg_root_mean_squared_error",
         cv=5,
         verbose=1,
         random_state=42,
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     y_pred_all = model.predict(X)
 
     # Plot Predictions
-    plt.figure(figsize=(8, 6))
+    fig = plt.figure(figsize=(8, 6))
     plt.scatter(y_train, y_hat, c="b", label="Train")
     plt.scatter(y_test, y_pred, c="r", label="Test")
     plt.axline([0, 0], slope=1, c="k", linestyle="--")
@@ -108,13 +108,13 @@ if __name__ == "__main__":
         f"Testing $R^2$ = {r2_score(y_test, y_pred):.2f}\n" +
         f"Entire dataset $R^2$ = {r2_score(y, y_pred_all):.2f}"
     )
-    plt.show()
+    fig.savefig(result_path/"")
 
     # Feature Importance Plot
-    xgb.plot_importance(model, importance_type='gain', height=0.5, max_num_features=10)
-    plt.title("Top Feature Importances")
-    plt.show()
+    # xgb.plot_importance(model, importance_type='gain', height=0.5, max_num_features=10)
+    # plt.title("Top Feature Importances")
+    # plt.show()
 
     # Save the model
-    # model.save_model(result_path / "final_xgb_model.json")
+    model.save_model(result_path / "xgb_model.json")
 
