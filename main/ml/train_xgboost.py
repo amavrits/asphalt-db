@@ -6,6 +6,8 @@ from pathlib import Path
 import xgboost as xgb
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.metrics import r2_score
+from src.ml.utils import *
+
 
 if __name__ == "__main__":
 
@@ -18,44 +20,8 @@ if __name__ == "__main__":
 
     df = pd.read_excel(data_file)
 
-    # Rename Columns
-    columns = {
-        "Dijknaam": "dijk",
-        "Projectnummer": "project",
-        "leeftijd": "age",
-        "HR": "void_ratio",
-        "Bitumen-gehalte NEN": "bitumen",
-        "Buigtreksterkte": "str"
-    }
-    df = df[list(columns.keys())]
-    df = df.rename(columns=columns)
-    df["bitumen"] = pd.to_numeric(df["bitumen"], errors="coerce")
+    X, y = prepare_data(df)
 
-    # Feature Engineering
-    df['age_x_void'] = df['age'] * df['void_ratio']
-    df['age_x_bitumen'] = df['age'] * df['bitumen']
-    df['void_x_bitumen'] = df['void_ratio'] * df['bitumen']
-    df['bitumen_per_void'] = df['bitumen'] / (df['void_ratio'] + 1e-6)
-
-    df['age_squared'] = df['age'] ** 2
-    df['void_squared'] = df['void_ratio'] ** 2
-    df['bitumen_squared'] = df['bitumen'] ** 2
-
-    df['log_age'] = np.log1p(df['age'])
-    df['log_void'] = np.log1p(df['void_ratio'])
-    df['log_bitumen'] = np.log1p(df['bitumen'])
-
-    df['inv_age'] = 1 / (df['age'] + 1)
-    df['inv_void'] = 1 / (df['void_ratio'] + 1)
-
-    df['mean_feature'] = df[['age', 'void_ratio', 'bitumen']].mean(axis=1)
-
-    df = df.dropna(how="any")
-
-    # Define Target and Pruned Feature Set
-    y = df["str"].values
-    df = df.drop(columns=["dijk", "project", "str"])
-    X = df.values
     selected_features = [0, 1, 2, 3, 4, 5, 6, 15]  # Pruned Feature Indices
     X = X[:, selected_features]
 
