@@ -36,7 +36,7 @@ def predict(model, X_train, y_train, X_test, y_test):
     y_pred_test = model.predict(X_test)
     y_pred_all = model.predict(X)
 
-    idx = np.argsort(y)[::-1]
+    idx = np.argsort(y)
     y = y[idx]
     y_pred_all = y_pred_all[idx]
 

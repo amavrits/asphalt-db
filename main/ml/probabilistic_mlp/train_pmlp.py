@@ -45,4 +45,6 @@ if __name__ == "__main__":
     lr_predictions = lr_model(X_lr_train, y_train, X_lr_test, y_test)
     plot_predictions(predictions["mean"], lr_predictions, result_path, "Probabilistic MLP Regression")
 
+    plot_quantiles(predictions, result_path)
+
 

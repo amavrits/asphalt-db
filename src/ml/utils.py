@@ -75,7 +75,7 @@ def lr_model(X_train, y_train, X_test, y_test):
     y_pred_test = f(X_test)
     y_pred_all = f(X)
 
-    idx = np.argsort(y)[::-1]
+    idx = np.argsort(y)
     y = y[idx]
     y_pred_all = y_pred_all[idx]
 
@@ -140,6 +140,52 @@ def plot_predictions(predictions, lr_predictions, plot_path, model_name):
     )
 
     fig.savefig(plot_path/"predictions.png")
+
+
+def plot_quantiles(predictions, plot_path):
+
+    mean_predictions = predictions["mean"]
+    lower_predictions = predictions["lower"]
+    upper_predictions = predictions["upper"]
+
+    y = mean_predictions["y"]
+    y_pred_all = mean_predictions["y_pred_all"]
+    test_flag = mean_predictions["test_flag"]
+
+    idx = np.argsort(y)
+    y = y[idx]
+    y_pred_all = y_pred_all[idx]
+    test_flag = test_flag[idx]
+
+    y_err_lower = np.abs(y_pred_all - lower_predictions["y_pred_all"][idx])
+    y_err_upper = np.abs(y_pred_all - upper_predictions["y_pred_all"][idx])
+
+    x = np.arange(1, y.size + 1)
+
+    points_per_plot = 40
+    n_plots = y.size // points_per_plot + 1
+
+    for i in range(n_plots):
+
+        plot_idx = np.arange(points_per_plot*i, min(points_per_plot*(i+1), y.size-1))
+
+        fig = plt.figure(figsize=(16, 6))
+        plt.scatter(x[plot_idx][~test_flag[plot_idx]], mean_predictions["y"][plot_idx][~test_flag[plot_idx]], color="b", marker="x", label="Training data")
+        plt.errorbar(
+            x[plot_idx][~test_flag[plot_idx]],
+            y_pred_all[plot_idx][~test_flag[plot_idx]],
+            yerr=[y_err_lower[plot_idx][~test_flag[plot_idx]], y_err_upper[plot_idx][~test_flag[plot_idx]]],
+            fmt="o", ecolor="b", alpha=0.7, capsize=3, label="Training 90% PI")
+        plt.scatter(x[plot_idx][test_flag[plot_idx]], mean_predictions["y"][plot_idx][test_flag[plot_idx]], color="r", marker="x", label="Testing data")
+        plt.errorbar(
+            x[plot_idx][test_flag[plot_idx]],
+            y_pred_all[plot_idx][test_flag[plot_idx]],
+            yerr=[y_err_lower[plot_idx][test_flag[plot_idx]], y_err_upper[plot_idx][test_flag[plot_idx]]],
+            fmt="o", ecolor="r", alpha=0.7, capsize=3, label="Testing 90% PI")
+        plt.xlabel("Point ID", fontsize=12)
+        plt.ylabel("Strength [kPa]", fontsize=12)
+        plt.grid()
+        fig.savefig(plot_path/f"quantiles_{min(plot_idx)+1}-{max(plot_idx)+1}.png")
 
 
 if __name__ == "__main__":

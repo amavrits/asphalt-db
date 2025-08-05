@@ -59,6 +59,7 @@ class ProbabilisticMLPRegressor(nn.Module):
         criterion = nn.MSELoss()
         optimizer = optim.Adam(self.parameters(), lr=lr, weight_decay=1e-4)
 
+        self.losses = []
         for epoch in tqdm(range(epochs)):
             self.train()
             optimizer.zero_grad()
@@ -67,6 +68,7 @@ class ProbabilisticMLPRegressor(nn.Module):
             loss.backward()
             optimizer.step()
 
+            self.losses.append(loss.item())
             if (epoch + 1) % 100 == 0:
                 print(f"Epoch [{epoch + 1}/{epochs}], Loss: {loss.item():.4f}")
 
@@ -78,8 +80,8 @@ class ProbabilisticMLPRegressor(nn.Module):
         X_scaled_tensor = torch.tensor(X_scaled, dtype=torch.float32)
         with torch.no_grad():
             y_hat, std = self.forward(X_scaled_tensor)
-        y_hat = y_hat.cpu().numpy()
-        std = std.cpu().numpy()
+        y_hat = y_hat.cpu().numpy().squeeze()
+        std = std.cpu().numpy().squeeze()
         return norm(loc=y_hat, scale=std).ppf(alpha)
 
 
@@ -92,7 +94,7 @@ def predict(model, X_train, y_train, X_test, y_test, alpha=0.5):
     y_pred_test = model.predict(X_test, alpha)
     y_pred_all = model.predict(X, alpha)
 
-    idx = np.argsort(y)[::-1]
+    idx = np.argsort(y)
     y = y[idx]
     y_pred_all = y_pred_all[idx]
 

@@ -51,6 +51,7 @@ class MLPRegressor(nn.Module):
         criterion = nn.MSELoss()
         optimizer = optim.Adam(self.parameters(), lr=lr, weight_decay=1e-4)
 
+        self.losses = []
         for epoch in tqdm(range(epochs)):
             self.train()
             optimizer.zero_grad()
@@ -59,6 +60,7 @@ class MLPRegressor(nn.Module):
             loss.backward()
             optimizer.step()
 
+            self.losses.append(loss.item())
             if (epoch + 1) % 100 == 0:
                 print(f"Epoch [{epoch + 1}/{epochs}], Loss: {loss.item():.4f}")
 
@@ -71,7 +73,7 @@ class MLPRegressor(nn.Module):
         with torch.no_grad():
             y_scaled = self.forward(X_scaled_tensor)
         y = self.y_scaler.inverse_transform(y_scaled.cpu().numpy())
-        return y
+        return y.squeeze()
 
 
 def predict(model, X_train, y_train, X_test, y_test):
@@ -83,7 +85,7 @@ def predict(model, X_train, y_train, X_test, y_test):
     y_pred_test = model.predict(X_test)
     y_pred_all = model.predict(X)
 
-    idx = np.argsort(y)[::-1]
+    idx = np.argsort(y)
     y = y[idx]
     y_pred_all = y_pred_all[idx]
 

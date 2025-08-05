@@ -49,9 +49,9 @@ if __name__ == "__main__":
     params_median = params_lower.copy()
     params_median['objective'] = 'regression'
     params_median.pop('alpha')
-    model_median = lgb.LGBMRegressor(**params_median)
-    model_median.fit(X_train, y_train, eval_set=[(X_test, y_test)], callbacks=[lgb.early_stopping(100)])
-    # model_median, params_median = random_search_lgb(X_train, y_train, X_test, y_test, param_grid, alpha=0.5)
+    model_mean = lgb.LGBMRegressor(**params_median)
+    model_mean.fit(X_train, y_train, eval_set=[(X_test, y_test)], callbacks=[lgb.early_stopping(100)])
+    # model_mean, params_median = random_search_lgb(X_train, y_train, X_test, y_test, param_grid, alpha=0.5)
 
     # Train Upper Quantile (95%)
     print("\n--- Tuning Upper Quantile Model ---")
@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
     # Save Models
     models = {
-        "median": model_median,
+        "mean": model_mean,
         "upper": model_upper,
         "lower": model_lower,
     }
@@ -76,8 +76,9 @@ if __name__ == "__main__":
     X_lr_train = X_train[:, [5, 1]]
     X_lr_test = X_test[:, [5, 1]]
     lr_predictions = lr_model(X_lr_train, y_train, X_lr_test, y_test)
-    plot_predictions(predictions["median"], lr_predictions, result_path, "LightGBM Quantile Regression")
+    plot_predictions(predictions["mean"], lr_predictions, result_path, "LightGBM Quantile Regression")
 
+    plot_quantiles(predictions, result_path)
 
     # testing_flag = predictions["testing_flag"]
     #
