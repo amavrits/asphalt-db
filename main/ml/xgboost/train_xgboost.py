@@ -2,10 +2,9 @@ import os
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from src.ml.xgboost import train, predict
+from src.ml.xgboost_model import train, predict
 from src.ml.utils import *
 from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt
 
 
 if __name__ == "__main__":
@@ -51,6 +50,6 @@ if __name__ == "__main__":
     X_lr_train = X_train[:, [1, 2]]
     X_lr_test = X_test[:, [1, 2]]
     lr_predictions = lr_model(X_lr_train, y_train, X_lr_test, y_test)
-    plot_predictions(predictions, lr_predictions, result_path)
+    plot_predictions(predictions, lr_predictions, result_path, "XGBoost Regression")
 
 

@@ -99,9 +99,9 @@ def lr_model(X_train, y_train, X_test, y_test):
     return predictions
 
 
-def plot_predictions(predictions, lr_predictions, plot_path):
+def plot_predictions(predictions, lr_predictions, plot_path, model_name):
 
-    fig, axs = plt.subplots(1, 2, figsize=(10, 6), sharex=True, sharey=True)
+    fig, axs = plt.subplots(1, 2, figsize=(10, 10), sharex=True, sharey=True)
 
     y_train = lr_predictions["y_train"]
     y_test = lr_predictions["y_test"]
@@ -115,7 +115,7 @@ def plot_predictions(predictions, lr_predictions, plot_path):
     axs[0].set_ylabel("Predictions", fontsize=12)
     axs[0].legend()
     axs[0].set_title(
-        "Linear regression model\n" +
+        "Linear Regression Model\n" +
         f"Training $R^2$ = {lr_predictions['r2_train']:.2f}\n" +
         f"Testing $R^2$ = {lr_predictions['r2_test']:.2f}\n" +
         f"Entire dataset $R^2$ = {lr_predictions['r2_all']:.2f}"
@@ -133,7 +133,7 @@ def plot_predictions(predictions, lr_predictions, plot_path):
     axs[1].set_ylabel("Predictions", fontsize=12)
     axs[1].legend()
     axs[1].set_title(
-        "XGBoost regression" +
+        f"{model_name}\n" +
         f"Training $R^2$ = {predictions['r2_train']:.2f}\n" +
         f"Testing $R^2$ = {predictions['r2_test']:.2f}\n" +
         f"Entire dataset $R^2$ = {predictions['r2_all']:.2f}"

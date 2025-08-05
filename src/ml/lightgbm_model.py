@@ -1,12 +1,13 @@
+import random
+import numpy as np
 import lightgbm as lgb
 from lightgbm import early_stopping, log_evaluation
-import numpy as np
-import random
-from tqdm import tqdm
 from sklearn.metrics import r2_score
+from sklearn.model_selection import RandomizedSearchCV
+from tqdm import tqdm
 
 
-def random_search_lgb(X_train, y_train, X_val, y_val, param_grid, alpha, n_iter=20):
+def train(X_train, y_train, X_val, y_val, param_grid, alpha, n_iter=20):
     best_model = None
     best_loss = float('inf')
     best_params = None
@@ -39,36 +40,35 @@ def random_search_lgb(X_train, y_train, X_val, y_val, param_grid, alpha, n_iter=
     return best_model, best_params
 
 
-def lgb_predict(models, X_train, y_train, X_test, y_test):
+def predict(model, X_train, y_train, X_test, y_test):
 
     X = np.vstack((X_train, X_test))
-    y = np.hstack((y_train, y_test))
-    idx = np.argsort(y)
-    testing_flag = np.zeros_like(y)
-    testing_flag[X_train.shape[0]:] = 1
-    testing_flag = testing_flag[idx]
-    testing_flag = testing_flag.astype(bool)
+    y = np.concat((y_train, y_test))
+
+    y_pred_train = model.predict(X_train)
+    y_pred_test = model.predict(X_test)
+    y_pred_all = model.predict(X)
+
+    idx = np.argsort(y)[::-1]
     y = y[idx]
+    y_pred_all = y_pred_all[idx]
+
+    test_flag = np.zeros(y.size).astype(bool)
+    test_flag[-y_test.size:] = 1
+    test_flag = test_flag[idx]
 
     predictions = {
         "y_train": y_train,
         "y_test": y_test,
         "y": y,
-        "testing_flag": testing_flag,
+        "y_pred_train": y_pred_train,
+        "y_pred_test": y_pred_test,
+        "y_pred_all": y_pred_all,
+        "test_flag": test_flag,
+        "r2_train": r2_score(y_train, y_pred_train),
+        "r2_test": r2_score(y_test, y_pred_test),
+        "r2_all": r2_score(y, y_pred_all),
     }
-
-    for (key, model) in models.items():
-        y_pred = model.predict(X)
-        y_pred = y_pred[idx]
-        predictions[key] = y_pred
-
-    predictions["r2_train"] = r2_score(y[~testing_flag], predictions["median"][~testing_flag])
-    predictions["r2_test"] = r2_score(y[testing_flag], predictions["median"][testing_flag])
-    predictions["r2_all"] = r2_score(y, predictions["median"])
-
-    predictions["coverage_train"] = np.mean((y_train >= predictions["lower"][~testing_flag]) & (y_train <= predictions["upper"][~testing_flag]))
-    predictions["coverage_test"] = np.mean((y_test >= predictions["lower"][testing_flag]) & (y_test <= predictions["upper"][testing_flag]))
-    predictions["coverage_all"] = np.mean((y >= predictions["lower"]) & (y <= predictions["upper"]))
 
     return predictions
 
