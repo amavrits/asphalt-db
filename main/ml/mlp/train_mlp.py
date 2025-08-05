@@ -48,7 +48,7 @@ if __name__ == "__main__":
     SCRIPT_DIR = Path(__file__).parent
     data_path = SCRIPT_DIR.parent.parent / "data"
     data_file = data_path / "from_bernadette/Database WAB - overzicht ADL28062023_BWich_selection18.8.xlsx"
-    result_path = Path("results")
+    result_path = Path("../results")
     result_path.mkdir(parents=True, exist_ok=True)
 
     df = pd.read_excel(data_file)
