@@ -1,5 +1,5 @@
 
-source .venv/bin/activate
+#source .venv/bin/activate
 
 echo Training XGBoost
 python -m main.ml.xgboost.train_xgboost

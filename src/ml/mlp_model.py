@@ -11,15 +11,17 @@ import matplotlib.pyplot as plt
 
 
 class MLPRegressor(nn.Module):
-    def __init__(self, input_dim, hidden_layers, dropout_rate=0.0):
+    def __init__(self, input_dim, hidden_layers, dropout_rate=0.2, device=None):
         """
         input_dim: int, number of input features.
         hidden_layers: list of ints, sizes of hidden layers.
         dropout_rate: float, dropout rate applied after each hidden layer.
         """
         super(MLPRegressor, self).__init__()
-        layers = []
 
+        self.set_device(device)
+
+        layers = []
         prev_dim = input_dim
         for hidden_dim in hidden_layers:
             layers.append(nn.Linear(prev_dim, hidden_dim))
@@ -32,8 +34,21 @@ class MLPRegressor(nn.Module):
         layers.append(nn.Sigmoid())
         self.net = nn.Sequential(*layers)
 
+        self.to(self.device)
+
     def forward(self, x):
         return self.net(x)
+
+    def set_device(self, device=None):
+        if device is None:
+            if torch.cuda.is_available():
+                device = "cuda"
+            elif torch.mps.is_available():
+                device = "mps"
+            else:
+                device = "cpu"
+        self.device = torch.device(device)
+        print(f"Using device: {device}")
 
     def fit(self, X, y, epochs=100, lr=1e-4):
 
@@ -44,8 +59,8 @@ class MLPRegressor(nn.Module):
         y_scaled = self.y_scaler.fit_transform(y.reshape(-1, 1)).squeeze()
 
         # Convert to PyTorch Tensors
-        X_scaled_tensor = torch.tensor(X_scaled, dtype=torch.float32)
-        y_scaled_tensor = torch.tensor(y_scaled, dtype=torch.float32).view(-1, 1)
+        X_scaled_tensor = torch.tensor(X_scaled, dtype=torch.float32).to(self.device)
+        y_scaled_tensor = torch.tensor(y_scaled, dtype=torch.float32).view(-1, 1).to(self.device)
 
         # Loss & Optimizer
         criterion = nn.MSELoss()
@@ -67,7 +82,7 @@ class MLPRegressor(nn.Module):
     def predict(self, X):
         self.eval()
         if isinstance(X, np.ndarray):
-            X = torch.tensor(X)
+            X = torch.tensor(X).to(self.device)
         X_scaled = self.x_scaler.transform(X)
         X_scaled_tensor = torch.tensor(X_scaled, dtype=torch.float32)
         with torch.no_grad():

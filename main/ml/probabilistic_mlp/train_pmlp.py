@@ -28,7 +28,7 @@ if __name__ == "__main__":
     epochs = 10_000
     lr = 1e-4
     hidden_layers = [256, 128, 64, 32]
-    model = ProbabilisticMLPRegressor(input_dim=X.shape[1], hidden_layers=hidden_layers, dropout_rate=0.2)
+    model = ProbabilisticMLPRegressor(input_dim=X.shape[1], hidden_layers=hidden_layers, dropout_rate=0.2, device="cpu")
     model.fit(X_train, y_train, epochs, lr)
     torch.save(model.state_dict(), result_path / "model.pth")
 
