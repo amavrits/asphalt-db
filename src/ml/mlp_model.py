@@ -81,10 +81,8 @@ class MLPRegressor(nn.Module):
 
     def predict(self, X):
         self.eval()
-        if isinstance(X, np.ndarray):
-            X = torch.tensor(X).to(self.device)
         X_scaled = self.x_scaler.transform(X)
-        X_scaled_tensor = torch.tensor(X_scaled, dtype=torch.float32)
+        X_scaled_tensor = torch.tensor(X_scaled, dtype=torch.float32).to(self.device)
         with torch.no_grad():
             y_scaled = self.forward(X_scaled_tensor)
         y = self.y_scaler.inverse_transform(y_scaled.cpu().numpy())
