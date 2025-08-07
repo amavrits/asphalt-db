@@ -239,6 +239,20 @@ def fill_stiffness_data_csv(borehole_path):
     test_path = borehole_path / f"stiffness"
     test_path.mkdir(exist_ok=True, parents=True)
 
+def get_sample_names_from_sheet(file: Path) -> list[str]:
+    """
+    Extract sample names from the Excel file, excluding specific sheets: Invoer, Resultaten, Grafieken, ORG,...
+    Unfortunately, it is not reliable to simply read the tabs and exclude only the first 3. Also not reliable to suppose
+    a sample starts with a figure or a letter.
+    :param file:
+    :return:
+    """
+    samples = pd.ExcelFile(file).sheet_names[3:] #hopefully the first 3 sheets are not samples and should be discarded?
+
+    # remove string like ORG, Invoer, Resultaten, Grafieken, .....
+    samples = [str(sample) for sample in samples if not re.match(r'^(ORG|Invoer|Resultaten|Grafieken|Org|Vermoeiingslijn|Layout voor rapportage|Resultaat)$', sample)]
+    return samples
+
 # def add_test_data_json():
 #     test_data = {
 #         "str_appratus": "A",
@@ -261,31 +275,34 @@ if __name__ == "__main__":
         shutil.rmtree(base_folder)
     base_folder.mkdir(exist_ok=True, parents=True)
 
-
-    # Find all projects:
-    projects_ids = list({
-        int(file.stem.rsplit('_', 1)[-1])
-        for file in input_files_folder.iterdir()
-        if file.stem.rsplit('_', 1)[-1].isdigit()
-    })
-
+    master_table = pd.read_excel(input_files_folder.joinpath("master_table.xlsx"))
+    projects_ids = master_table['project'].dropna().unique().astype(int).tolist()
 
     fill_project_data_csv(base_folder, projects_ids)
-    for project in projects_ids:
+
+    project_dict = {}
+    for project_id in projects_ids:
+        project_dict[f"P_{project_id}"] = {}
 
         # Grouping by vak
         vak_dict = {}
-        for file in input_files_folder.iterdir():
-            filename = file.name
-            vak = filename.split('_')[0]
+
+        #filter master_table for the current project
+        project_master_table = master_table[master_table['project'] == project_id]
+        # Get all the vak names for the current project
+
+
+        for _, row in project_master_table.iterrows():
+            filename = row['filename']
+            vak = row['dijk']
             if vak not in vak_dict:
                 vak_dict[vak] = {}
             if "Analyse Bezwijksterkte" in filename:
-                vak_dict[vak]["strength"] = file
+                vak_dict[vak]["strength"] = filename
             elif "Vermoeiing" in filename:
-                vak_dict[vak]["fatigue"] = file
+                vak_dict[vak]["fatigue"] = filename
             elif "Stijfheid" in filename:
-                continue # TODO
+                continue # TODO include stiffness
             elif 'master' in filename:
                 continue
 
@@ -300,8 +317,8 @@ if __name__ == "__main__":
             strength_file = vak_files.get("strength")
             fatigue_file = vak_files.get("fatigue")
 
-            sample_name_strength = pd.ExcelFile(strength_file).sheet_names[3:]
-            sample_name_fatigue = pd.ExcelFile(fatigue_file).sheet_names[3:]
+            sample_name_strength = get_sample_names_from_sheet(input_files_folder.joinpath(strength_file))
+            sample_name_fatigue = get_sample_names_from_sheet(input_files_folder.joinpath(fatigue_file))
 
             # Validation of sample names for the current vak
             # if len(sample_name_strength) != len(sample_name_fatigue):
@@ -318,7 +335,7 @@ if __name__ == "__main__":
             borehole_ids = list(set(list(strength_sample_ids) + list(fatigue_sample_ids)))
 
 
-            fill_master_table_data(project, vak_name, list(borehole_ids), master_table_data)
+            fill_master_table_data(project_id, vak_name, list(borehole_ids), master_table_data)
             #There can be one borehole without strength because the test was bad or something.
 
 
@@ -326,12 +343,12 @@ if __name__ == "__main__":
             for borehole_id in borehole_ids:
                 borehole_name = f"BH{borehole_id}"
 
-                borehole_path = base_folder.joinpath(f"P_{project}", borehole_name)
+                borehole_path = base_folder.joinpath(f"P_{project_id}", borehole_name)
                 borehole_path.mkdir(exist_ok=True, parents=True)
 
                 fill_borehole_data_csv(borehole_path, borehole_name)
                 fill_sample_data_csv(borehole_path, borehole_id, strength_file)
-                fill_general_table_data(project, borehole_id, general_table_data)
+                fill_general_table_data(project_id, borehole_id, general_table_data)
 
                 fill_strength_data_csv(borehole_path, f"{borehole_id}B", strength_file)
                 fill_fatigue_data_csv(borehole_path, f"{borehole_id}V", fatigue_file)
