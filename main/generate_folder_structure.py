@@ -29,14 +29,18 @@ def fill_general_table_data(project_id: int, borehole_id, general_table_data: li
     return general_table_data
 
 
-def fill_project_data_csv(base_folder: Path, project_names):
-    n_projects = len(project_names)
-    project_data = {
-        "project_name": project_names,
-        "project_code": ["BBBBB"] * n_projects,
-        "date": [str(datetime.utcnow())] * n_projects,
-        "notes": ["AAAA"] * n_projects
-    }
+def fill_project_data_csv(base_folder: Path, project_names: list[int]):
+    project_data = []
+    for project_id in project_names:
+        project_folder = base_folder.joinpath(f"P_{project_id}")
+        project_folder.mkdir(exist_ok=True, parents=True)
+        project_data.append({
+            "project_name": f"P_{project_id}",
+            "project_code": f"{project_id}",
+            "date": str(datetime.utcnow()),
+            "notes": "AAAA"
+        })
+
     df_projects = pd.DataFrame(data=project_data)
     df_projects.to_csv(base_folder.joinpath("project_table.csv"), index=False)
 
@@ -249,17 +253,25 @@ def fill_stiffness_data_csv(borehole_path):
 
 if __name__ == "__main__":
     tic = time.time()
-    n_projects = 1
 
     SCRIPT_DIR = Path(__file__).parent
-    base_folder = SCRIPT_DIR.parent / "data/automated_data"
-    input_files_folder = Path(r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data1') # make the path a env variable
+    base_folder = SCRIPT_DIR.parent / "data/automated_data_new"
+    input_files_folder = Path(r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data2') # make the path a env variable
     if base_folder.is_dir():
         shutil.rmtree(base_folder)
     base_folder.mkdir(exist_ok=True, parents=True)
 
-    fill_project_data_csv(base_folder, [f"P_{i}" for i in range(1, n_projects + 1)])
-    for project in range(1, n_projects + 1):
+
+    # Find all projects:
+    projects_ids = list({
+        int(file.stem.rsplit('_', 1)[-1])
+        for file in input_files_folder.iterdir()
+        if file.stem.rsplit('_', 1)[-1].isdigit()
+    })
+
+
+    fill_project_data_csv(base_folder, projects_ids)
+    for project in projects_ids:
 
         # Grouping by vak
         vak_dict = {}
@@ -272,6 +284,8 @@ if __name__ == "__main__":
                 vak_dict[vak]["strength"] = file
             elif "Vermoeiing" in filename:
                 vak_dict[vak]["fatigue"] = file
+            elif "Stijfheid" in filename:
+                continue # TODO
             elif 'master' in filename:
                 continue
 
