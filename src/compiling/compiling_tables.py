@@ -29,4 +29,4 @@ projectnummers = ['048304', '0601831', '0700462/0702493', '0801782', '0802158', 
 dijktraject = 'n.t.b.'
 
 make_headtable(file_path, projectnummers, dijktraject)
-make_table2(file_path, projectnummers)
+# make_table2(file_path, projectnummers)
