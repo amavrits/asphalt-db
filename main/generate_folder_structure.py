@@ -334,7 +334,7 @@ if __name__ == "__main__":
     fill_project_data_csv(base_folder, projects_ids)
 
     project_dict = {}
-    # Loop over all the dike
+    # Loop over all the dijk
     master_table_data = []
     general_table_data = []
     dike_table_data = []
@@ -427,7 +427,7 @@ if __name__ == "__main__":
                 fill_fatigue_data_csv(borehole_path, fatigue_sample_name, fatigue_file)
                 fill_stiffness_data_csv(borehole_path, stiffness_sample_name, stiffness_file)
 
-    master_table_df = pd.DataFrame(master_table_data, columns=["project", "borehole", "dike"])
+    master_table_df = pd.DataFrame(master_table_data, columns=["project", "borehole", "dijk"])
     general_data_df = pd.DataFrame(general_table_data, columns=["project", "borehole", "sample", "e"])
     general_data_df = general_data_df.drop_duplicates(subset=["project", "borehole", "sample"])
     df_dikes = pd.DataFrame(data=dike_table_data, columns=["dike_name", "waterboard", "notes"])

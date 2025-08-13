@@ -46,7 +46,7 @@ strength = query_sample_data[0].strength
 
 ## Get raw data
 query_raw_data =  (
-    StrSampleRaw
+    BezwijksterkteRuwe
     .select()
     .join(Test)
     .join(Sample)

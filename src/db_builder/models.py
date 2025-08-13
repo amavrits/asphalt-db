@@ -10,7 +10,7 @@ class BaseModel(Model):
     class Meta:
         database = db
 
-class Dike(BaseModel):
+class Dijk(BaseModel):
     dike_name = CharField()
     waterboard = CharField()
     notes = TextField(null=True)
@@ -21,13 +21,13 @@ class Project(BaseModel):
     date = DateField(null=True)
     notes = TextField(null=True)
 
-class ProjectDike(BaseModel):
-    project = ForeignKeyField(Project, backref="dike_links")
-    dike = ForeignKeyField(Dike, backref="project_links")
+class ProjectDijk(BaseModel):
+    project = ForeignKeyField(Project, backref="dijk_links")
+    dijk = ForeignKeyField(Dijk, backref="project_links")
 
 class Borehole(BaseModel):
     borehole_name = CharField()
-    project_dike = ForeignKeyField(ProjectDike, backref="boreholes")
+    project_dijk = ForeignKeyField(ProjectDijk, backref="boreholes")
     collection_date = DateField(null=True)
     X_coord = FloatField(null=True)
     Y_coord = FloatField(null=True)
@@ -57,18 +57,18 @@ class GeneralData(BaseModel):
     # Additional test fields
     e = FloatField(null=True)        # void ratio (e)
 
-class StrSampleRaw(BaseModel):
-    test = ForeignKeyField(Test, backref='str_samples', null=True)
+class BezwijksterkteRuwe(BaseModel):
+    test = ForeignKeyField(Test, backref='strength_samples', null=True)
     notes = TextField(null=True)
     sample_name = CharField()
 
     # STR raw test fields
-    t = FloatField(null=True)        # time or thickness (depends on context)
+    t = FloatField(null=True)        #
     F = FloatField(null=True)        # force
     V_org = FloatField(null=True)    # original volume
 
-class StrSampleProcessed(BaseModel):
-    sample_raw = ForeignKeyField(StrSampleRaw, backref='processed_samples', null=True)
+class BezwijksterkteProcessed(BaseModel):
+    sample_raw = ForeignKeyField(BezwijksterkteRuwe, backref='strength_processed_samples', null=True)
     notes = TextField(null=True)
     sample_name = CharField()
 
@@ -79,8 +79,8 @@ class StrSampleProcessed(BaseModel):
     sig = FloatField(null=True)       # stress
     Sec = FloatField(null=True)       # secant modulus
 
-class StrSummary(BaseModel):
-    test = ForeignKeyField(Test, backref='str_samples_summary', null=True)
+class BezwijksterkteSummary(BaseModel):
+    test = ForeignKeyField(Test, backref='strength_samples_summary', null=True)
     sample_name = CharField()
 
     HR = FloatField()
@@ -97,8 +97,8 @@ class StrSummary(BaseModel):
 
 
 
-class FtgSampleRaw(BaseModel):
-    test = ForeignKeyField(Test, backref='ftg_samples', null=True)
+class VermoeiingRuwe(BaseModel):
+    test = ForeignKeyField(Test, backref='fatigue_samples', null=True)
     notes = TextField(null=True)
     sample_name = CharField()
 
@@ -112,8 +112,8 @@ class FtgSampleRaw(BaseModel):
     in_phase_modulus = FloatField(null=True)
     out_phase_modulus = FloatField(null=True)
 
-class FtgSampleProcessed(BaseModel):
-    sample_raw = ForeignKeyField(FtgSampleRaw, backref='processed_samples', null=True)
+class VermoeiingProcessed(BaseModel):
+    sample_raw = ForeignKeyField(VermoeiingRuwe, backref='fatigue_processed_samples', null=True)
     notes = TextField(null=True)
     sample_name = CharField()
 
@@ -126,8 +126,8 @@ class FtgSampleProcessed(BaseModel):
     E_dyn = FloatField(null=True)      # dynamic modulus
     pha = FloatField(null=True)        # phase angle
 
-class FtgSummary(BaseModel):
-    test = ForeignKeyField(Test, backref='ftg_samples_summary', null=True)
+class VermoeiingSummary(BaseModel):
+    test = ForeignKeyField(Test, backref='fatigue_samples_summary', null=True)
     sample_name = CharField()
     pha_ini = FloatField()  # Initial phase angle
     pha_50 = FloatField()  # Phase angle at 50% of cycles
@@ -138,7 +138,7 @@ class FtgSummary(BaseModel):
     N_fat = IntegerField()  # Number of fatigue cycles
 
 
-class StiffnessSampleRaw(BaseModel):
+class StijfheidRuwe(BaseModel):
     test = ForeignKeyField(Test, backref='Edyn_samples', null=True)
     notes = TextField(null=True)
     sample_name = CharField()
@@ -150,7 +150,7 @@ class StiffnessSampleRaw(BaseModel):
     E_dyn = FloatField(null=True)     # Dynamic modulus
     pha = FloatField(null=True)       # Phase angle
 
-class StfSummary(BaseModel):
+class StijfheidSummary(BaseModel):
     test = ForeignKeyField(Test, backref='stf_samples_summary', null=True)
     notes = TextField(null=True)
     sample_name = CharField()

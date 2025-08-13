@@ -39,9 +39,9 @@ def create_db(db_config):
 
 def create_tables(db, drop_tables=False):
     tables = [
-        Dike, Project, ProjectDike, Borehole, Sample, Test, GeneralData,
-        StrSampleRaw, StrSampleProcessed, StrSummary,
-        FtgSampleRaw, FtgSampleProcessed, FtgSummary, StiffnessSampleRaw, StfSummary
+        Dijk, Project, ProjectDijk, Borehole, Sample, Test, GeneralData,
+        BezwijksterkteRuwe, BezwijksterkteProcessed, BezwijksterkteSummary,
+        VermoeiingRuwe, VermoeiingProcessed, VermoeiingSummary, StijfheidRuwe, StijfheidSummary
     ]
     if drop_tables:
         db.drop_tables(tables, safe=True)
@@ -51,26 +51,26 @@ def create_tables(db, drop_tables=False):
 def resolve_borehole(borehole_name, project_name, master_table):
     dike_name = master_table.loc[
         (master_table["project"] == project_name) &
-        (master_table["borehole"] == borehole_name), "dike"
+        (master_table["borehole"] == borehole_name), "dijk"
     ].item()
 
     project = Project.get(Project.project_name == project_name)
-    dike = Dike.get(Dike.dike_name == dike_name)
-    project_dike = ProjectDike.get(project=project, dike=dike)
-    borehole = Borehole.get(borehole_name=borehole_name, project_dike=project_dike)
+    dike = Dijk.get(Dijk.dike_name == dike_name)
+    project_dike = ProjectDijk.get(project=project, dijk=dike)
+    borehole = Borehole.get(borehole_name=borehole_name, project_dijk=project_dike)
     return project, dike, project_dike, borehole
 
 
 def resolve_sample(sample_name, borehole_name, project_name, master_table):
     dike_name = master_table.loc[
         (master_table["project"] == project_name) &
-        (master_table["borehole"] == borehole_name), "dike"
+        (master_table["borehole"] == borehole_name), "dijk"
     ].item()
 
     project = Project.get(Project.project_name == project_name)
-    dike = Dike.get(Dike.dike_name == dike_name)
-    project_dike = ProjectDike.get(project=project, dike=dike)
-    borehole = Borehole.get(borehole_name=borehole_name, project_dike=project_dike)
+    dike = Dijk.get(Dijk.dike_name == dike_name)
+    project_dike = ProjectDijk.get(project=project, dijk=dike)
+    borehole = Borehole.get(borehole_name=borehole_name, project_dijk=project_dike)
     sample = Sample.get(sample_name=sample_name, borehole=borehole)
     return project, dike, project_dike, borehole, sample
 
@@ -80,25 +80,25 @@ def add_project(project_name, project_data):
 
 
 def add_dike(dike_name, dike_data):
-    Dike.get_or_create(**dike_data, dike_name=dike_name)
+    Dijk.get_or_create(**dike_data, dike_name=dike_name)
 
 
 def add_projectdike(dike_name, project_name):
-    dike = Dike.get(Dike.dike_name == dike_name)
+    dike = Dijk.get(Dijk.dike_name == dike_name)
     project = Project.get(Project.project_name == project_name)
-    ProjectDike.get_or_create(dike=dike, project=project)
+    ProjectDijk.get_or_create(dijk=dike, project=project)
 
 
 def add_borehole(borehole_name, project_name, master_table, borehole_data):
     dike_name = master_table.loc[
         (master_table["project"] == project_name) &
-        (master_table["borehole"] == borehole_name), "dike"
+        (master_table["borehole"] == borehole_name), "dijk"
     ].item()
 
     project = Project.get(Project.project_name == project_name)
-    dike = Dike.get(Dike.dike_name == dike_name)
-    project_dike = ProjectDike.get(project=project, dike=dike)
-    Borehole.create(**borehole_data, project_dike=project_dike)
+    dike = Dijk.get(Dijk.dike_name == dike_name)
+    project_dike = ProjectDijk.get(project=project, dijk=dike)
+    Borehole.create(**borehole_data, project_dijk=project_dike)
 
 
 def add_sample(sample_name, borehole_name, project_name, master_table, sample_data):
@@ -148,7 +148,7 @@ def add_summarized_data(model_cls, test_name, sample_name, borehole_name, projec
 
 
 def iter_dikes(project_name, master_table, dike_table):
-    project_dikes = master_table.loc[master_table["project"] == project_name, "dike"].unique()
+    project_dikes = master_table.loc[master_table["project"] == project_name, "dijk"].unique()
     for dike_name in project_dikes:
         dike_data = dike_table.loc[dike_name, :].to_dict()
         add_dike(dike_name, dike_data)
@@ -170,30 +170,30 @@ def add_samples(borehole_name, project_name, master_table, test_folder, data_typ
         if test_folder.stem == "strength":
             if data_type == "raw":
                 print("Adding raw strength data strength")
-                add_test_data(StrSampleRaw, test_name, sample_name, borehole_name, project_name, master_table, data)
+                add_test_data(BezwijksterkteRuwe, test_name, sample_name, borehole_name, project_name, master_table, data)
             elif data_type == "processed":
                 print("Adding processed strength data strength")
-                add_processed_data(StrSampleProcessed, StrSampleRaw, test_name, sample_name, borehole_name, project_name, master_table, data)
+                add_processed_data(BezwijksterkteProcessed, BezwijksterkteRuwe, test_name, sample_name, borehole_name, project_name, master_table, data)
             elif data_type == "summarized":
                 print("Adding strength summary data")
-                add_summarized_data(StrSummary, test_name, sample_name, borehole_name, project_name, master_table, data)
+                add_summarized_data(BezwijksterkteSummary, test_name, sample_name, borehole_name, project_name, master_table, data)
         elif test_folder.stem == "fatigue":
             if data_type == "raw":
                 print("Adding raw fatigue data")
-                add_test_data(FtgSampleRaw, test_name, sample_name, borehole_name, project_name, master_table, data)
+                add_test_data(VermoeiingRuwe, test_name, sample_name, borehole_name, project_name, master_table, data)
             elif data_type == "processed":
                 print("Adding processed fatigue data")
-                add_processed_data(FtgSampleProcessed, FtgSampleRaw, test_name, sample_name, borehole_name, project_name, master_table, data)
+                add_processed_data(VermoeiingProcessed, VermoeiingRuwe, test_name, sample_name, borehole_name, project_name, master_table, data)
             elif data_type == "summarized":
                 print("Adding fatigue summary data")
-                add_summarized_data(FtgSummary, test_name, sample_name, borehole_name, project_name, master_table, data)
+                add_summarized_data(VermoeiingSummary, test_name, sample_name, borehole_name, project_name, master_table, data)
         elif test_folder.stem == "stiffness":
             if data_type == "raw":
                 print("Adding raw stiffness data")
-                add_test_data(StiffnessSampleRaw, test_name, sample_name, borehole_name, project_name, master_table, data)
+                add_test_data(StijfheidRuwe, test_name, sample_name, borehole_name, project_name, master_table, data)
             elif data_type == "summarized":
                 print("Adding fatigue summary data")
-                add_summarized_data(StfSummary, test_name, sample_name, borehole_name, project_name, master_table, data)
+                add_summarized_data(StijfheidSummary, test_name, sample_name, borehole_name, project_name, master_table, data)
         else:
             raise ValueError(f"Unknown test type {test_folder.stem}")
 

@@ -10,7 +10,7 @@ input_files_folder = Path(
 def generate_template_master_table(input_folder: Path):
     data = []
     for file in input_folder.glob('*.xlsm'):
-        # Extract project and dike from the filename
+        # Extract project and dijk from the filename
         parts = file.stem.split('_')
         if len(parts) >= 2:
             project = file.stem.rsplit('_', 1)[-1]

@@ -30,12 +30,12 @@ db.connect()
 
 
 query_strength_data =  (
-    StrSummary
+    BezwijksterkteSummary
     .select()
     .join(Test)
     .join(Sample)
     .join(Borehole)
-    .join(ProjectDike)
+    .join(ProjectDijk)
     .join(Project)
     .where(
         (Project.project_name == project)
@@ -49,7 +49,7 @@ query_fatigue_data =  (
     .join(Test)
     .join(Sample)
     .join(Borehole)
-    .join(ProjectDike)
+    .join(ProjectDijk)
     .join(Project)
     .where(
         (Project.project_name == project)

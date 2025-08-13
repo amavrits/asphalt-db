@@ -1,6 +1,6 @@
 from src.db_builder.models import (
-    Dike, Project, ProjectDike, Borehole, Sample, Test,
-    GeneralData, StrSampleRaw, FtgSampleRaw, StiffnessSampleRaw, StrSampleProcessed, FtgSampleProcessed
+    Dijk, Project, ProjectDijk, Borehole, Sample, Test,
+    GeneralData, BezwijksterkteRuwe, VermoeiingRuwe, StijfheidRuwe, BezwijksterkteProcessed, VermoeiingProcessed
 )
 from src.config import DB_CONFIG
 from peewee import PostgresqlDatabase
@@ -12,9 +12,9 @@ if __name__ == "__main__":
     db.connect()
 
     models = [
-        Dike, Project, ProjectDike, Borehole, Sample, Test,
-        GeneralData, StrSampleRaw, FtgSampleRaw, StiffnessSampleRaw,
-        StrSampleProcessed, FtgSampleProcessed
+        Dijk, Project, ProjectDijk, Borehole, Sample, Test,
+        GeneralData, BezwijksterkteRuwe, VermoeiingRuwe, StijfheidRuwe,
+        BezwijksterkteProcessed, VermoeiingProcessed
     ]
 
     for model in models:
