@@ -12,7 +12,7 @@ import psycopg2
 if __name__ == "__main__":
 
     SCRIPT_DIR = Path(__file__).parent
-    data_path = SCRIPT_DIR.parent / "data/automated_data"
+    data_path = SCRIPT_DIR.parent / "data/automated_data_new"
 
     dike_table, project_table, master_table, general_data = parse_base_data(data_path)
 
@@ -67,7 +67,7 @@ if __name__ == "__main__":
                 for test_folder in test_folder_list:
 
                     for data_type in ["raw", "processed", "summarized"]:
-                        if test_folder.stem == 'stiffness':
+                        if test_folder.stem == 'stiffness' and data_type == "processed": # stiffness data does not have processed data table
                             continue # TODO later when we have stiffness data
                         add_samples(borehole_name, project_name, master_table, test_folder, data_type)
 

@@ -150,6 +150,13 @@ class StiffnessSampleRaw(BaseModel):
     E_dyn = FloatField(null=True)     # Dynamic modulus
     pha = FloatField(null=True)       # Phase angle
 
+class StfSummary(BaseModel):
+    test = ForeignKeyField(Test, backref='stf_samples_summary', null=True)
+    notes = TextField(null=True)
+    sample_name = CharField()
+
+    temp = FloatField(null=True)  # Temperature
+    E_dyn_value = FloatField(null=True)  # Dynamic modulus value
 
 if __name__ == "__main__":
 

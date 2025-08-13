@@ -41,7 +41,7 @@ def create_tables(db, drop_tables=False):
     tables = [
         Dike, Project, ProjectDike, Borehole, Sample, Test, GeneralData,
         StrSampleRaw, StrSampleProcessed, StrSummary,
-        FtgSampleRaw, FtgSampleProcessed, FtgSummary, StiffnessSampleRaw
+        FtgSampleRaw, FtgSampleProcessed, FtgSummary, StiffnessSampleRaw, StfSummary
     ]
     if drop_tables:
         db.drop_tables(tables, safe=True)
@@ -191,6 +191,9 @@ def add_samples(borehole_name, project_name, master_table, test_folder, data_typ
             if data_type == "raw":
                 print("Adding raw stiffness data")
                 add_test_data(StiffnessSampleRaw, test_name, sample_name, borehole_name, project_name, master_table, data)
+            elif data_type == "summarized":
+                print("Adding fatigue summary data")
+                add_summarized_data(StfSummary, test_name, sample_name, borehole_name, project_name, master_table, data)
         else:
             raise ValueError(f"Unknown test type {test_folder.stem}")
 
