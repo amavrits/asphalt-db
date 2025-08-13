@@ -1,7 +1,7 @@
 from pathlib import Path
 
 input_files_folder = Path(
-    r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data2')  # make the path a env variable
+    r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data3')  # make the path a env variable
 
 
 # create a excel data with 3 columns: filename, project, dijk
@@ -17,7 +17,7 @@ def generate_template_master_table(input_folder: Path):
             data.append({
                 'filename': file.name,
                 'project': project,
-                'dike': ''
+                'dijk': ''
             })
 
     # Create a DataFrame
