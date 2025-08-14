@@ -11,12 +11,15 @@ bernadette_file = Path(r'C:\Users\hauth\repositories\asphalte_regression\data\Da
 bernadette_data_df = pd.read_excel(bernadette_file, sheet_name='Sheet1')
 
 
-print(bernadette_data_df)
 
 
 #
 general_data_df = pd.read_csv(base_folder.joinpath('general_data.csv'))
 master_table_df = pd.read_csv(base_folder.joinpath('master_table.csv'))
+
+
+general_data_df['HR'] = general_data_df['HR'].astype(float)
+general_data_df['bitumen'] = general_data_df['bitumen'].astype(float)
 
 for idx, row in general_data_df.iterrows():
     project_id = int(row['project'].split('_')[1])
@@ -33,6 +36,7 @@ for idx, row in general_data_df.iterrows():
         general_data_df.loc[idx, 'bitumen'] = bitumen
 
     else:
+        print("SKIPED - No data found for project_id:", project_id, "borehole_id:", borehole_id)
         general_data_df.loc[idx, 'HR'] = None
         general_data_df.loc[idx, 'bitumen'] = None
 
@@ -55,6 +59,7 @@ for idx, row in master_table_df.iterrows():
         master_table_df.loc[idx, 'onderzoeksjaar'] = sample_year
 
     else:
+        print("SKIPED - No data found for project_id:", project_id, "borehole_id:", borehole_id)
         master_table_df.loc[idx, 'aanlegjaar'] = None
         master_table_df.loc[idx, 'onderzoeksjaar'] = None
 
@@ -62,3 +67,5 @@ for idx, row in master_table_df.iterrows():
 
 general_data_df.to_csv(base_folder.joinpath('general_data.csv'), index=False)
 master_table_df.to_csv(base_folder.joinpath('master_table.csv'), index=False)
+
+print("Bernadette's data successfully added to the folder structure!")

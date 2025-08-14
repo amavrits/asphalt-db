@@ -432,6 +432,10 @@ if __name__ == "__main__":
                 fatigue_sample_name = sample_names_mapping_dict[borehole_id]["fatigue"][0]
                 stiffness_sample_name = sample_names_mapping_dict[borehole_id]["stiffness"][0]
 
+                if len(sample_names_mapping_dict[borehole_id]["fatigue"]) > 1:
+                    raise Exception(
+                        f"Sample {sample_names_mapping_dict[borehole_id]['fatigue']} has multiple fatigue samples (project {project_id}). Please modify the file so that there is only one sample per borehole.")
+
                 borehole_path = base_folder.joinpath(f"P_{project_id}", borehole_name)
                 borehole_path.mkdir(exist_ok=True, parents=True)
 
