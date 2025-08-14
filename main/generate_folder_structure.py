@@ -369,11 +369,11 @@ if __name__ == "__main__":
             vak = row['dijk']
             if vak not in vak_dict_mapping:
                 vak_dict_mapping[vak] = {}
-            if "Analyse Bezwijksterkte" in filename:
+            if "bezwijksterkte" in filename.lower():
                 vak_dict_mapping[vak]["strength"] = filename
-            elif "Vermoeiing" in filename:
+            elif "vermoeiing" in filename.lower():
                 vak_dict_mapping[vak]["fatigue"] = filename
-            elif "Stijfheid" in filename:
+            elif "stijfheid" in filename.lower():
                 vak_dict_mapping[vak]["stiffness"] = filename
             elif 'master' in filename:
                 continue
