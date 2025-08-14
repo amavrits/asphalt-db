@@ -108,12 +108,12 @@ def add_sample(sample_name, borehole_name, project_name, master_table, sample_da
 
 def add_sample_general_data(sample_name, borehole_name, project_name, master_table, general_data):
     *_, sample = resolve_sample(sample_name, borehole_name, project_name, master_table)
-    e = float(general_data.loc[
+    HR = float(general_data.loc[
         (general_data["project"] == project_name) &
         (general_data["borehole"] == borehole_name) &
-        (general_data["sample"] == sample_name), "e"
+        (general_data["sample"] == sample_name), "HR"
     ].item())
-    GeneralData.create(sample=sample, e=e)
+    GeneralData.create(sample=sample, HR=HR)
 
 
 def add_sample_test(test_name, sample_name, borehole_name, project_name, master_table, borehole_folder):

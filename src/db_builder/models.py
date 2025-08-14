@@ -55,7 +55,7 @@ class GeneralData(BaseModel):
     sample = ForeignKeyField(Sample, backref='gen_samples', null=True)
 
     # Additional test fields
-    e = FloatField(null=True)        # void ratio (e)
+    HR = FloatField(null=True)        # void ratio
 
 class BezwijksterkteRuwe(BaseModel):
     test = ForeignKeyField(Test, backref='strength_samples', null=True)

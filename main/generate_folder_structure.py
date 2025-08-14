@@ -18,9 +18,19 @@ from src.processing.strength_processing import make_table_raw_data, calc_linear_
 
 
 def fill_master_table_data(project: int, vak_name: str, borehole_id_list: list[int], master_table_data: list) -> list:
+    """
+    The columns of the master table are: project, borehole, dijk, aanlegjaar, onderzoekjaar
+    :param project:
+    :param vak_name:
+    :param borehole_id_list:
+    :param master_table_data:
+    :return:
+    """
+
+    # fillers for aanlegjaar and onderzoekjaar, these will be filled later with the data from Bernadette
     for borehole_id in borehole_id_list:
         master_table_data.append(
-            [f"P_{project}", f"BH{borehole_id}", f"{vak_name}"]
+            [f"P_{project}", f"BH{borehole_id}", f"{vak_name}", 1900, 1900]
         )
     return master_table_data
 
@@ -28,9 +38,21 @@ def fill_master_table_data(project: int, vak_name: str, borehole_id_list: list[i
 def fill_general_table_data(project_id: int, borehole_id, sample_name_strength: str, sample_name_fatigue: str,
                             sample_name_stiffness: str,
                             general_table_data: list):
-    general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_strength, 0])
-    general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_fatigue, 0])
-    general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_stiffness, 0])
+    """
+    Columns of the general table are: project, borehole, HR, bitumen
+    :param project_id:
+    :param borehole_id:
+    :param sample_name_strength:
+    :param sample_name_fatigue:
+    :param sample_name_stiffness:
+    :param general_table_data:
+    :return:
+    """
+
+    # Fillers for HR and bitumen, these will be filled later with the data from Bernadette
+    general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_strength, 0, 0])
+    general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_fatigue, 0, 0])
+    general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_stiffness, 0, 0])
     return general_table_data
 
 
@@ -42,7 +64,7 @@ def fill_project_data_csv(base_folder: Path, project_names: list[int]):
         project_data.append({
             "project_name": f"P_{project_id}",
             "project_code": f"{project_id}",
-            "date": str(datetime.utcnow()),
+            "date": str(datetime.utcnow()),  # TODO: remove.
             "notes": "AAAA"
         })
 
@@ -54,11 +76,10 @@ def fill_dike_data_table_df(vak_dict: dict, dike_data):
     dike_names = list(vak_dict.keys())
     for dike_name in dike_names:
         dike_data.append({
-        "dike_name": dike_name,
-        "waterboard": "HHNK",
-        "notes": "" ,
-    })
-
+            "dike_name": dike_name,
+            "waterboard": "HHNK",
+            "notes": "",
+        })
 
 
 def fill_borehole_data_csv(borehole_path: Path, borehole_name: str):
@@ -263,7 +284,6 @@ def fill_stiffness_data_csv(borehole_path, sample_name: str, stiffness_file: Pat
         'notes': '',
     })
 
-
     df_raw.to_csv(test_path / f"raw_data.csv", index=False)
 
     # Filter rijen waar f == 10
@@ -285,7 +305,6 @@ def fill_stiffness_data_csv(borehole_path, sample_name: str, stiffness_file: Pat
 
     df_summarized = df_summarized.sort_values(by='sample_name', ascending=True)
     df_summarized.to_csv(test_path / f"summarized_data.csv", index=False)
-
 
 
 def get_sample_names_from_sheet(file: Path) -> list[str]:
@@ -427,8 +446,10 @@ if __name__ == "__main__":
                 fill_fatigue_data_csv(borehole_path, fatigue_sample_name, fatigue_file)
                 fill_stiffness_data_csv(borehole_path, stiffness_sample_name, stiffness_file)
 
-    master_table_df = pd.DataFrame(master_table_data, columns=["project", "borehole", "dijk"])
-    general_data_df = pd.DataFrame(general_table_data, columns=["project", "borehole", "sample", "e"])
+    master_table_df = pd.DataFrame(master_table_data,
+                                   columns=["project", "borehole", "dijk", "aanlegjaar", "onderzoeksjaar"])
+
+    general_data_df = pd.DataFrame(general_table_data, columns=["project", "borehole", "sample", "HR", "bitumen"])
     general_data_df = general_data_df.drop_duplicates(subset=["project", "borehole", "sample"])
     df_dikes = pd.DataFrame(data=dike_table_data, columns=["dike_name", "waterboard", "notes"])
 
