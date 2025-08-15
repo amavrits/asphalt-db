@@ -52,14 +52,14 @@ class ProbabilisticMLPRegressor(nn.Module):
             else:
                 device = "cpu"
         self.device = torch.device(device)
-        print(f"Using device: {device}")
+        # print(f"Using device: {device}")
 
     def nll_loss(self, y, y_hat, std):
         # Negative Log Likelihood of Normal Distribution
         var = std ** 2 + 1e-5
         return torch.mean(0.5 * torch.log(2 * np.pi * var) + 0.5 * ((y - y_hat) ** 2) / var)
 
-    def fit(self, X, y, epochs=100, lr=1e-4):
+    def fit(self, X, y, epochs=100, lr=1e-4, verbose=False):
 
         self.x_scaler = MinMaxScaler()
         X_scaled = self.x_scaler.fit_transform(X)
@@ -73,7 +73,8 @@ class ProbabilisticMLPRegressor(nn.Module):
         optimizer = optim.Adam(self.parameters(), lr=lr, weight_decay=1e-4)
 
         self.losses = []
-        for epoch in tqdm(range(epochs)):
+        epoch_generator = tqdm(range(epochs)) if verbose else range(epochs)
+        for epoch in epoch_generator:
             self.train()
             optimizer.zero_grad()
             y_hat, std = self.forward(X_scaled_tensor)
@@ -82,7 +83,7 @@ class ProbabilisticMLPRegressor(nn.Module):
             optimizer.step()
 
             self.losses.append(loss.item())
-            if (epoch + 1) % 100 == 0:
+            if (epoch + 1) % 100 == 0 and verbose:
                 print(f"Epoch [{epoch + 1}/{epochs}], Loss: {loss.item():.4f}")
 
     def predict(self, X, alpha=0.5):

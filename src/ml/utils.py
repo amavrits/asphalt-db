@@ -111,8 +111,8 @@ def plot_predictions(predictions, lr_predictions, plot_path, model_name):
     axs[0].scatter(y_train, y_pred_train, c="b", label="Train")
     axs[0].scatter(y_test, y_pred_test, c="r", label="Test")
     axs[0].axline([0, 0], slope=1, c="k", linestyle="--")
-    axs[0].set_xlabel("Observations", fontsize=12)
-    axs[0].set_ylabel("Predictions", fontsize=12)
+    axs[0].set_xlabel("Observed strength [kPa]", fontsize=12)
+    axs[0].set_ylabel("Predicted strength [kPa]", fontsize=12)
     axs[0].legend()
     axs[0].set_title(
         "Linear Regression Model\n" +
@@ -129,8 +129,8 @@ def plot_predictions(predictions, lr_predictions, plot_path, model_name):
     axs[1].scatter(y_train, y_pred_train, c="b", label="Train")
     axs[1].scatter(y_test, y_pred_test, c="r", label="Test")
     axs[1].axline([0, 0], slope=1, c="k", linestyle="--")
-    axs[1].set_xlabel("Observations", fontsize=12)
-    axs[1].set_ylabel("Predictions", fontsize=12)
+    axs[1].set_xlabel("Observed strength [kPa]", fontsize=12)
+    axs[1].set_ylabel("Predicted strength [kPa]", fontsize=12)
     axs[1].legend()
     axs[1].set_title(
         f"{model_name}\n" +
@@ -170,13 +170,15 @@ def plot_quantiles(predictions, plot_path):
         plot_idx = np.arange(points_per_plot*i, min(points_per_plot*(i+1), y.size-1))
 
         fig = plt.figure(figsize=(16, 6))
-        plt.scatter(x[plot_idx][~test_flag[plot_idx]], mean_predictions["y"][plot_idx][~test_flag[plot_idx]], color="b", marker="x", label="Training data")
+        plt.scatter(x[plot_idx][~test_flag[plot_idx]], mean_predictions["y"][plot_idx][~test_flag[plot_idx]],
+                    color="b", marker="x", label="Training data")
         plt.errorbar(
             x[plot_idx][~test_flag[plot_idx]],
             y_pred_all[plot_idx][~test_flag[plot_idx]],
             yerr=[y_err_lower[plot_idx][~test_flag[plot_idx]], y_err_upper[plot_idx][~test_flag[plot_idx]]],
             fmt="o", ecolor="b", alpha=0.7, capsize=3, label="Training 90% PI")
-        plt.scatter(x[plot_idx][test_flag[plot_idx]], mean_predictions["y"][plot_idx][test_flag[plot_idx]], color="r", marker="x", label="Testing data")
+        plt.scatter(x[plot_idx][test_flag[plot_idx]], mean_predictions["y"][plot_idx][test_flag[plot_idx]],
+                    color="r", marker="x", label="Testing data")
         plt.errorbar(
             x[plot_idx][test_flag[plot_idx]],
             y_pred_all[plot_idx][test_flag[plot_idx]],
@@ -185,6 +187,7 @@ def plot_quantiles(predictions, plot_path):
         plt.xlabel("Point ID", fontsize=12)
         plt.ylabel("Strength [kPa]", fontsize=12)
         plt.grid()
+        plt.legend()
         fig.savefig(plot_path/f"quantiles_{min(plot_idx)+1}-{max(plot_idx)+1}.png")
 
 

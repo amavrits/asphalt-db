@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
     # Save with "Bitumen"
     df_bitumen = df.copy()
-    df_bitumen = df_bitumen.dropna(subset="bitumen")
+    df_bitumen = df_bitumen[pd.to_numeric(df["bitumen"], errors="coerce").notna()]
     df_bitumen.to_csv(SILVER_DATA_PATH/"w_bitumen.csv")
 
     GOLD_BITUMEN_PATH = GOLD_DATA_PATH / "w_bitumen"
