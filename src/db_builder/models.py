@@ -29,6 +29,8 @@ class Borehole(BaseModel):
     borehole_name = CharField()
     project_dijk = ForeignKeyField(ProjectDijk, backref="boreholes")
     collection_date = DateField(null=True)
+    aanlegjaar = IntegerField(null=True)  # Construction year
+    onderzoeksjaar = IntegerField(null=True)  # Sample year
     X_coord = FloatField(null=True)
     Y_coord = FloatField(null=True)
     notes = TextField(null=True)
@@ -55,7 +57,8 @@ class GeneralData(BaseModel):
     sample = ForeignKeyField(Sample, backref='gen_samples', null=True)
 
     # Additional test fields
-    HR = FloatField(null=True)        # void ratio
+    HR = FloatField(null=True)        # void
+    bitumen = FloatField(null=True)  # Bitumen content
 
 class BezwijksterkteRuwe(BaseModel):
     test = ForeignKeyField(Test, backref='strength_samples', null=True)

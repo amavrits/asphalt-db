@@ -4,6 +4,7 @@ import psycopg
 import pandas as pd
 import json
 from peewee import PostgresqlDatabase
+
 from src.db_builder.models import *
 
 
@@ -95,6 +96,22 @@ def add_borehole(borehole_name, project_name, master_table, borehole_data):
         (master_table["borehole"] == borehole_name), "dijk"
     ].item()
 
+    construction_year = master_table.loc[
+        (master_table["project"] == project_name) &
+        (master_table["borehole"] == borehole_name), "aanlegjaar"
+    ].item()
+
+    sample_year = master_table.loc[
+        (master_table["project"] == project_name) &
+        (master_table["borehole"] == borehole_name), "onderzoeksjaar"
+    ].item()
+
+    try:
+        borehole_data['aanlegjaar'] = int(construction_year)
+        borehole_data['onderzoeksjaar'] = int(sample_year)
+    except ValueError:
+        raise ValueError(f"Incorrect construction or sample year format for {dike_name} ")
+
     project = Project.get(Project.project_name == project_name)
     dike = Dijk.get(Dijk.dike_name == dike_name)
     project_dike = ProjectDijk.get(project=project, dijk=dike)
@@ -108,12 +125,18 @@ def add_sample(sample_name, borehole_name, project_name, master_table, sample_da
 
 def add_sample_general_data(sample_name, borehole_name, project_name, master_table, general_data):
     *_, sample = resolve_sample(sample_name, borehole_name, project_name, master_table)
-    HR = float(general_data.loc[
+
+    row = general_data.loc[
         (general_data["project"] == project_name) &
         (general_data["borehole"] == borehole_name) &
-        (general_data["sample"] == sample_name), "HR"
-    ].item())
-    GeneralData.create(sample=sample, HR=HR)
+        (general_data["sample"] == sample_name)
+    ].squeeze()  # returns a Series for one row
+
+    GeneralData.create(
+        sample=sample,
+        HR=float(row["HR"]),
+        bitumen=float(row["bitumen"])
+    )
 
 
 def add_sample_test(test_name, sample_name, borehole_name, project_name, master_table, borehole_folder):

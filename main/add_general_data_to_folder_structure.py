@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pandas as pd
-
 SCRIPT_DIR = Path(__file__).parent
 base_folder = SCRIPT_DIR.parent / "data/automated_data_new"
 
@@ -9,7 +8,6 @@ base_folder = SCRIPT_DIR.parent / "data/automated_data_new"
 bernadette_file = Path(r'C:\Users\hauth\repositories\asphalte_regression\data\Database WAB - overzicht ADL28062023_BWich_selection18.8.xlsx')
 
 bernadette_data_df = pd.read_excel(bernadette_file, sheet_name='Sheet1')
-
 
 
 

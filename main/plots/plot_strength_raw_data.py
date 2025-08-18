@@ -36,8 +36,7 @@ query_sample_data =  (
     .join(Borehole)
     .where(
         (Sample.sample_name == sample) &
-        (Borehole.borehole_name == borehole)
-    )
+        (Borehole.borehole_name == borehole)  &    )
 )
 v = query_sample_data[0].v
 D = query_sample_data[0].thickness

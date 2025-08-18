@@ -47,7 +47,11 @@ print(f'De resultaten van de driepuntsbuigproeven van **{grafiektitel}** zijn de
 
 
 #HOOFDSCRIPT - TABEL EN FIGUUR
-fig, axs = plt.subplots(2, 4, figsize=(20, 10))
+nb = len(list)
+
+nb_cols = 4
+nb_rows= 2
+fig, axs = plt.subplots(nb_rows, nb_cols, figsize=(5 * nb_cols, 5 * nb_rows))
 axs = axs.flatten()
 
 f = pd.ExcelFile(file_path)

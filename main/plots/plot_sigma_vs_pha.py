@@ -8,10 +8,9 @@ import psycopg
 from src.db_builder.models import *
 
 from src.config import DB_CONFIG
+from src.db_builder.models import VermoeiingSummary
 
-
-
-project = "P_1"
+project = "P_701493"
 
 
 db_config = DB_CONFIG
@@ -44,7 +43,7 @@ query_strength_data =  (
 )
 
 query_fatigue_data =  (
-    FtgSummary
+    VermoeiingSummary
     .select()
     .join(Test)
     .join(Sample)
