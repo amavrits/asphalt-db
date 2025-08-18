@@ -20,11 +20,11 @@ def train(X_train, y_train, epochs, lr, hidden_layers, path=None, device="cpu", 
     return model
 
 
-def make_predictions(model, X_train, y_train, X_test, y_test):
+def make_predictions(model, X_train, y_train, X_test, y_test, log_y=False):
     predictions = {
-        "mean": predict(model, X_train, y_train, X_test, y_test, alpha=0.5),
-        "lower": predict(model, X_train, y_train, X_test, y_test, alpha=0.05),
-        "upper": predict(model, X_train, y_train, X_test, y_test, alpha=0.95)
+        "mean": predict(model, X_train, y_train, X_test, y_test, log_y, alpha=0.5),
+        "lower": predict(model, X_train, y_train, X_test, y_test, log_y, alpha=0.05),
+        "upper": predict(model, X_train, y_train, X_test, y_test, log_y, alpha=0.95)
     }
     return predictions
 
@@ -46,7 +46,8 @@ def load_data(path):
     y_train = np.load(path/"y_train.npy", allow_pickle=True)
     X_test = np.load(path/"X_test.npy", allow_pickle=True)
     y_test = np.load(path/"y_test.npy", allow_pickle=True)
-    return X_train, y_train, X_test, y_test
+    X_timeline = np.load(path/"X_timeline.npy", allow_pickle=True)
+    return X_train, y_train, X_test, y_test, X_timeline
 
 
 def export_predictions(predictions, file):
@@ -65,16 +66,15 @@ def export_predictions(predictions, file):
 
 def run_pipeline(data_path, result_path, params, log_y=False, verbose=False):
 
-    X_train, y_train, X_test, y_test = load_data(data_path)
-
-    if log_y:
-        y_train = np.log(y_train)
-        y_test = np.log(y_test)
+    X_train, y_train, X_test, y_test, X_timeline = load_data(data_path)
 
     epochs, lr, hidden_layers = params
-    model = train(X_train, y_train, epochs, lr, hidden_layers, result_path, "cpu", verbose)
+    if log_y:
+        model = train(X_train, np.log(y_train), epochs, lr, hidden_layers, result_path, "cpu", verbose)
+    else:
+        model = train(X_train, y_train, epochs, lr, hidden_layers, result_path, "cpu", verbose)
 
-    model_predictions = make_predictions(model, X_train, y_train, X_test, y_test)
+    model_predictions = make_predictions(model, X_train, y_train, X_test, y_test, log_y)
     export_predictions(model_predictions, result_path/"model_predictions.json")
 
     lr_predictions = make_lr_predictions(X_train, y_train, X_test, y_test, age_column_idx=0, void_ratio_column_idx=1)
@@ -83,6 +83,8 @@ def run_pipeline(data_path, result_path, params, log_y=False, verbose=False):
     plot_path = result_path / "plots"
     plot_path.mkdir(exist_ok=True, parents=True)
     plot(model_predictions, lr_predictions, plot_path)
+
+    plot_timelines(model, X_timeline, X_train, y_train, plot_path)
 
     return model_predictions
 
@@ -104,7 +106,7 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
     # Train model
-    epochs = 10_000
+    epochs = 2
     lr = 1e-4
     hidden_layers = [256, 128, 64, 32]
     model = train(X_train, y_train, epochs, lr, hidden_layers, result_path, verbose=True)
@@ -113,6 +115,5 @@ if __name__ == "__main__":
     model_predictions = make_predictions(model, X_train, y_train, X_test, y_test)
 
     #Plot
-    plot(model_predictions, X_train, y_train, X_test, y_test, result_path)
-
+    plot_timelines(model, X_timeline, X_train, y_train, result_path)
 

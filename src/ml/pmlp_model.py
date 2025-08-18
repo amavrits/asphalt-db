@@ -97,7 +97,7 @@ class ProbabilisticMLPRegressor(nn.Module):
         return norm(loc=y_hat, scale=std).ppf(alpha)
 
 
-def predict(model, X_train, y_train, X_test, y_test, alpha=0.5):
+def predict(model, X_train, y_train, X_test, y_test, log_y=False, alpha=0.5):
 
     X = np.vstack((X_train, X_test))
     y = np.concat((y_train, y_test))
@@ -113,6 +113,11 @@ def predict(model, X_train, y_train, X_test, y_test, alpha=0.5):
     test_flag = np.zeros(y.size).astype(bool)
     test_flag[-y_test.size:] = 1
     test_flag = test_flag[idx]
+
+    if log_y:
+        y_pred_train = np.exp(y_pred_train)
+        y_pred_test = np.exp(y_pred_test)
+        y_pred_all = np.exp(y_pred_all)
 
     predictions = {
         "y_train": y_train,

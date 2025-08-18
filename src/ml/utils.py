@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import r2_score
 import matplotlib.pyplot as plt
+from sympy.abc import alpha
 
 
 def prepare_data(df):
@@ -189,6 +190,31 @@ def plot_quantiles(predictions, plot_path):
         plt.grid()
         plt.legend()
         fig.savefig(plot_path/f"quantiles_{min(plot_idx)+1}-{max(plot_idx)+1}.png")
+
+
+def plot_timelines(model, X_timeline, X_train, y_train, plot_path):
+
+    age_idx = 0
+    void_ratio_idx = 1
+
+    void_ratios = np.sort(np.unique(X_timeline[:, 1]))
+    for void_ratio in void_ratios:
+
+        X_void_ratio = X_timeline[X_timeline[:, 1]==void_ratio]
+        y_hat = model.predict(X_void_ratio)
+        y_05 = model.predict(X_void_ratio, alpha=0.05)
+        y_95 = model.predict(X_void_ratio, alpha=0.05)
+
+        fig = plt.figure(figsize=(16, 6))
+        plt.scatter(X_train[:, age_idx], y_train, color="b", marker="x", label="Training data")
+        plt.plot(X_void_ratio[:, age_idx], y_hat, color="r", label="Model")
+        plt.plot(X_void_ratio[:, age_idx], y_05, linestyle="--", color="r")
+        plt.plot(X_void_ratio[:, age_idx], y_95, linestyle="--", color="r")
+        plt.xlabel("Age", fontsize=12)
+        plt.ylabel("Strength [kPa]", fontsize=12)
+        plt.grid()
+        plt.legend()
+        fig.savefig(plot_path/f"timeline_void_ratio_{void_ratio:.1f}.png")
 
 
 if __name__ == "__main__":

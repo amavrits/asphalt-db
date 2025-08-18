@@ -28,19 +28,17 @@ def run(n_splits, use_bitumen, epochs, lr, hidden_layers, log_y):
 
     BASE_RESULT_PATH.mkdir(exist_ok=True, parents=True)
 
-    # empty_dir(BASE_RESULT_PATH)
-
     BASE_RESULT_PATH = BASE_RESULT_PATH / f"logy_{str(log_y)}"
 
     params = (epochs, lr, hidden_layers)
 
-    # run_splits(
-    #     data_path=BASE_DATA_PATH,
-    #     base_result_path=BASE_RESULT_PATH,
-    #     n_splits=n_splits,
-    #     params=params,
-    #     log_y=log_y
-    # )
+    run_splits(
+        data_path=BASE_DATA_PATH,
+        base_result_path=BASE_RESULT_PATH,
+        n_splits=n_splits,
+        params=params,
+        log_y=log_y
+    )
 
     compile_splits(BASE_RESULT_PATH)
 
@@ -66,7 +64,6 @@ def run_splits(data_path, base_result_path, n_splits, params, log_y=False):
 
 
 def compile_splits(base_path):
-
 
     split_folders = [f for f in base_path.iterdir() if f.is_dir()]
 

@@ -1,11 +1,33 @@
-source .venv/bin/activate
+# --- Activate venv ---
+if [ -f ".venv/bin/activate" ]; then
+  # shellcheck disable=SC1091
+  source .venv/bin/activate
+else
+  echo "Warning: .venv/bin/activate not found; continuing without venv."
+fi
+
+
+# Delete result path (pass a directory to delete as the first arg).
+DIR="${1:-results/ml/probabilistic_mlp}"
+if [ -n "$DIR" ]; then
+  if [ -d "$DIR" ]; then
+    echo "Deleting directory: $DIR"
+    rm -rf "$DIR"
+    echo "Done."
+  else
+    echo "Directory does not exist: $DIR"
+  fi
+else
+  echo "No directory provided to delete. Skipping cleanup."
+fi
+
 
 n_splits=100
-epochs=10000
+epochs=10_000
 lr=0.0001
 bitumens=(True False)
-#logys=(False True)
-logys=(False)
+logys=(False True)
+
 
 for bitumen in "${bitumens[@]}"; do
     echo "Bitumen: $bitumen"
