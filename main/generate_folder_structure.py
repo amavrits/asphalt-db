@@ -64,7 +64,6 @@ def fill_project_data_csv(base_folder: Path, project_names: list[int]):
         project_data.append({
             "project_name": f"P_{project_id}",
             "project_code": f"{project_id}",
-            "date": str(datetime.utcnow()),  # TODO: remove.
             "notes": "AAAA"
         })
 
@@ -343,12 +342,15 @@ if __name__ == "__main__":
     base_folder = SCRIPT_DIR.parent / "data/automated_data_new"
     input_files_folder = Path(
         r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data3')  # make the path a env variable
+
+    input_general_data_file = Path(r"c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data2\Database Asfalt Excel.xlsx")
+
     if base_folder.is_dir():
         shutil.rmtree(base_folder)
     base_folder.mkdir(exist_ok=True, parents=True)
 
-    master_table = pd.read_excel(input_files_folder.joinpath("master_table.xlsx"))
-    projects_ids = master_table['project'].dropna().unique().astype(int).tolist()
+    input_general_data_table = pd.read_excel(input_general_data_file, sheet_name="Database")
+    projects_ids = input_general_data_table['Projectnummer'].dropna().unique().tolist()
 
     fill_project_data_csv(base_folder, projects_ids)
 
@@ -362,9 +364,15 @@ if __name__ == "__main__":
 
         # Group all the files by vak
         vak_dict_mapping = {}
-        project_master_table = master_table[master_table['project'] == project_id]
+        project_master_table = input_general_data_table[input_general_data_table['Projectnummer'] == project_id]
 
-        for _, row in project_master_table.iterrows():
+        vak_list = project_master_table['Dijknaam'].dropna().unique().tolist()
+
+
+
+
+        for file in input_files_folder.glob("*.xlsm"):
+        # for _, row in project_master_table.iterrows():
             filename = row['filename']
             vak = row['dijk']
             if vak not in vak_dict_mapping:
