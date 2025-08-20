@@ -341,7 +341,7 @@ if __name__ == "__main__":
     SCRIPT_DIR = Path(__file__).parent
     base_folder = SCRIPT_DIR.parent / "data/automated_data_new"
     input_files_folder = Path(
-        r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data3')  # make the path a env variable
+        r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data2')  # make the path a env variable
 
     input_general_data_file = Path(r"c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data2\Database Asfalt Excel.xlsx")
 
@@ -350,7 +350,11 @@ if __name__ == "__main__":
     base_folder.mkdir(exist_ok=True, parents=True)
 
     input_general_data_table = pd.read_excel(input_general_data_file, sheet_name="Database")
+    # convert the column 'Projectnummer' to string
+    input_general_data_table['Projectnummer'] = input_general_data_table['Projectnummer'].astype(str)
     projects_ids = input_general_data_table['Projectnummer'].dropna().unique().tolist()
+    projects_ids.reverse()
+    projects_ids = ['1901142']
 
     fill_project_data_csv(base_folder, projects_ids)
 
@@ -369,22 +373,56 @@ if __name__ == "__main__":
         vak_list = project_master_table['Dijknaam'].dropna().unique().tolist()
 
 
-
-
         for file in input_files_folder.glob("*.xlsm"):
+            filename = file.stem
         # for _, row in project_master_table.iterrows():
-            filename = row['filename']
-            vak = row['dijk']
-            if vak not in vak_dict_mapping:
-                vak_dict_mapping[vak] = {}
-            if "bezwijksterkte" in filename.lower():
-                vak_dict_mapping[vak]["strength"] = filename
-            elif "vermoeiing" in filename.lower():
-                vak_dict_mapping[vak]["fatigue"] = filename
-            elif "stijfheid" in filename.lower():
-                vak_dict_mapping[vak]["stiffness"] = filename
-            elif 'master' in filename:
+            if project_id not in filename:
                 continue
+
+            for vak in vak_list:
+                vak_dict_mapping.setdefault(vak, {})
+
+                vak_data = project_master_table.loc[project_master_table['Dijknaam'] == vak, 'Boorkern']
+                vak_dict_mapping[vak]["BH_ids"] = vak_data.dropna().unique().tolist()
+
+                if "bezwijksterkte" in filename.lower():
+                    fname = filename + ".xlsm"
+                    samples = get_sample_names_from_sheet(input_files_folder.joinpath(fname))
+
+                    for s in samples:
+                        if (m := re.search(r'\d+', s)):  # walrus operator for compactness
+                            num = int(m.group())
+                            if num in vak_dict_mapping[vak]["BH_ids"]:
+                                vak_dict_mapping[vak]["strength"] = fname
+                                break  # stop once a match is found
+
+                elif "vermoeiing" in filename.lower():
+                    fname = filename + ".xlsm"
+                    samples = get_sample_names_from_sheet(input_files_folder.joinpath(fname))
+
+                    for s in samples:
+                        if (m := re.search(r'\d+', s)):  # walrus operator for compactness
+                            num = int(m.group())
+                            if num in vak_dict_mapping[vak]["BH_ids"]:
+                                vak_dict_mapping[vak]["fatigue"] = fname
+                                break  # stop once a match is found
+
+
+
+
+                elif "stijfheid" in filename.lower():
+
+                    fname = filename + ".xlsm"
+                    samples = get_sample_names_from_sheet(input_files_folder.joinpath(fname))
+
+                    for s in samples:
+                        if (m := re.search(r'\d+', s)):  # walrus operator for compactness
+                            num = int(m.group())
+                            if num in vak_dict_mapping[vak]["BH_ids"]:
+                                vak_dict_mapping[vak]["stiffness"] = fname
+                                break  # stop once a match is found
+                elif 'master' in filename:
+                    continue
 
         fill_dike_data_table_df(vak_dict_mapping, dike_table_data)
 
@@ -428,7 +466,8 @@ if __name__ == "__main__":
 
             sample_names_mapping_dict = make_mapping(sample_name_strength, sample_name_fatigue, sample_name_stiffness)
 
-            borehole_ids = list(sample_names_mapping_dict.keys())
+            # borehole_ids = list(sample_names_mapping_dict.keys())
+            borehole_ids = vak_files["BH_ids"]
             borehole_ids.sort()
 
             fill_master_table_data(project_id, vak_name, borehole_ids, master_table_data)
