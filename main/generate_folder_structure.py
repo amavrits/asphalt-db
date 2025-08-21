@@ -17,7 +17,22 @@ from src.processing.strength_processing import make_table_raw_data, calc_linear_
     calc_fracture_data
 
 
-def fill_master_table_data(project: int, vak_name: str, borehole_id_list: list[int], master_table_data: list) -> list:
+
+KEYWORD_MAP = {
+    "bezwijksterkte": "strength",
+    "vermoeiing": "fatigue",
+    "stijfheid": "stiffness",
+}
+
+# ----------------- HELPERS -----------------
+def extract_num(s: str) -> int | None:
+    """Extract first integer from string, or None if not found."""
+    if m := re.search(r'\d+', s):
+        return int(m.group())
+    return None
+
+
+def fill_master_table_data(project: int, vak_name: str, borehole_id_list: list[int], master_table_data: list, vak_data: pd.DataFrame) -> list:
     """
     The columns of the master table are: project, borehole, dijk, aanlegjaar, onderzoekjaar
     :param project:
@@ -26,18 +41,19 @@ def fill_master_table_data(project: int, vak_name: str, borehole_id_list: list[i
     :param master_table_data:
     :return:
     """
+    construction_year =  vak_data['Aanleg-jaar'].iloc[0] if not vak_data.empty else None
+    sample_year =  vak_data['onderzoeksjaar'].iloc[0] if not vak_data.empty else None
 
-    # fillers for aanlegjaar and onderzoekjaar, these will be filled later with the data from Bernadette
     for borehole_id in borehole_id_list:
         master_table_data.append(
-            [f"P_{project}", f"BH{borehole_id}", f"{vak_name}", 1900, 1900]
+            [f"P_{project}", f"BH{borehole_id}", f"{vak_name}", construction_year, sample_year]
         )
     return master_table_data
 
 
 def fill_general_table_data(project_id: int, borehole_id, sample_name_strength: str, sample_name_fatigue: str,
                             sample_name_stiffness: str,
-                            general_table_data: list):
+                            general_table_data: list, bh_data: pd.DataFrame) -> list:
     """
     Columns of the general table are: project, borehole, HR, bitumen
     :param project_id:
@@ -50,9 +66,11 @@ def fill_general_table_data(project_id: int, borehole_id, sample_name_strength: 
     """
 
     # Fillers for HR and bitumen, these will be filled later with the data from Bernadette
-    general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_strength, 0, 0])
-    general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_fatigue, 0, 0])
-    general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_stiffness, 0, 0])
+    HR =  bh_data['HR'].iloc[0] if not bh_data.empty else None
+    bitumen = bh_data['Bitumengehalte NEN'].iloc[0] if not bh_data.empty else None
+    general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_strength, HR, bitumen])
+    general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_fatigue, HR, bitumen])
+    general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_stiffness, HR, bitumen])
     return general_table_data
 
 
@@ -71,12 +89,13 @@ def fill_project_data_csv(base_folder: Path, project_names: list[int]):
     df_projects.to_csv(base_folder.joinpath("project_table.csv"), index=False)
 
 
-def fill_dike_data_table_df(vak_dict: dict, dike_data):
+def fill_dike_data_table_df(vak_dict: dict, dike_data, project_master_table: pd.DataFrame):
     dike_names = list(vak_dict.keys())
+    waterboard = project_master_table['Waterschap / beheerder'].dropna().unique().tolist()[0]
     for dike_name in dike_names:
         dike_data.append({
             "dike_name": dike_name,
-            "waterboard": "HHNK",
+            "waterboard": waterboard,
             "notes": "",
         })
 
@@ -323,16 +342,60 @@ def get_sample_names_from_sheet(file: Path) -> list[str]:
     return samples
 
 
-# def add_test_data_json():
-#     test_data = {
-#         "str_appratus": "A",
-#         "ftg_appratus": "B",
-#         "stiff_appratus": "C",
-#         "notes": ["DDDDDD"],
-#     }
-#     # TODO
-#     with open(test_path / "test_data.json", "w") as f:
-#         json.dump(test_data, f, indent=4)
+
+def load_samples(file_path: Path) -> list[str]:
+    """Wrapper for sheet-reading function with existence check."""
+    if not file_path or not file_path.exists():
+        return []
+    return get_sample_names_from_sheet(file_path)
+
+def assign_files_to_vak(vak_dict_mapping, project_master_table: pd.DataFrame, filename, input_files_folder):
+    """Assign strength/fatigue/stiffness files to each vak based on filename keywords."""
+    vak_list = project_master_table['Dijknaam'].dropna().unique().tolist()
+
+    for vak in vak_list:
+        vak_dict_mapping.setdefault(vak, {})
+        vak_data = project_master_table.loc[project_master_table['Dijknaam'] == vak, 'Boorkern']
+        vak_dict_mapping[vak]["BH_ids"] = vak_data.dropna().unique().tolist()
+
+        for keyword, attr in KEYWORD_MAP.items():
+            if keyword in filename.lower():
+                fname = filename + ".xlsm"
+                samples = load_samples(input_files_folder / fname)
+
+                for s in samples:
+                    if (num := extract_num(s)) and num in vak_dict_mapping[vak]["BH_ids"]:
+                        vak_dict_mapping[vak][attr] = fname
+                        break  # stop once a match is found
+                break  # matched keyword, no need to check others
+
+
+def process_borehole(project_id, bh_data: pd.DataFrame, borehole_id, base_folder, sample_names_mapping_dict, vak_files):
+    """Process individual borehole: create dirs, export CSVs."""
+    borehole_name = f"BH{borehole_id}"
+    borehole_path = base_folder / f"P_{project_id}" / borehole_name
+    borehole_path.mkdir(exist_ok=True, parents=True)
+
+    strength_file = input_files_folder / vak_files.get("strength")
+    fatigue_file = input_files_folder / vak_files.get("fatigue")
+    stiffness_file = input_files_folder / vak_files.get("stiffness")
+
+    strength_sample = sample_names_mapping_dict[borehole_id]["strength"][0]
+    fatigue_sample = sample_names_mapping_dict[borehole_id]["fatigue"][0]
+    stiffness_sample = sample_names_mapping_dict[borehole_id]["stiffness"][0]
+
+    if len(sample_names_mapping_dict[borehole_id]["fatigue"]) > 1:
+        raise ValueError(
+            f"Sample {sample_names_mapping_dict[borehole_id]['fatigue']} has multiple fatigue samples "
+            f"(project {project_id}). Please fix the file so only one sample per borehole exists."
+        )
+
+    fill_borehole_data_csv(borehole_path, borehole_name)
+    fill_sample_data_csv(borehole_path, strength_sample, fatigue_sample, stiffness_sample, strength_file)
+    fill_general_table_data(project_id, borehole_id, strength_sample, fatigue_sample, stiffness_sample, general_table_data, bh_data)
+    fill_strength_data_csv(borehole_path, strength_sample, strength_file)
+    fill_fatigue_data_csv(borehole_path, fatigue_sample, fatigue_file)
+    fill_stiffness_data_csv(borehole_path, stiffness_sample, stiffness_file)
 
 
 if __name__ == "__main__":
@@ -349,12 +412,12 @@ if __name__ == "__main__":
         shutil.rmtree(base_folder)
     base_folder.mkdir(exist_ok=True, parents=True)
 
-    input_general_data_table = pd.read_excel(input_general_data_file, sheet_name="Database")
+    input_general_data_table = pd.read_excel(input_general_data_file, sheet_name="Database", dtype={"Projectnummer": str})
     # convert the column 'Projectnummer' to string
     input_general_data_table['Projectnummer'] = input_general_data_table['Projectnummer'].astype(str)
     projects_ids = input_general_data_table['Projectnummer'].dropna().unique().tolist()
     projects_ids.reverse()
-    projects_ids = ['1901142']
+    projects_ids = ['1901142',  '0702493']
 
     fill_project_data_csv(base_folder, projects_ids)
 
@@ -374,57 +437,13 @@ if __name__ == "__main__":
 
 
         for file in input_files_folder.glob("*.xlsm"):
-            filename = file.stem
-        # for _, row in project_master_table.iterrows():
-            if project_id not in filename:
+            if project_id not in file.stem:
                 continue
-
-            for vak in vak_list:
-                vak_dict_mapping.setdefault(vak, {})
-
-                vak_data = project_master_table.loc[project_master_table['Dijknaam'] == vak, 'Boorkern']
-                vak_dict_mapping[vak]["BH_ids"] = vak_data.dropna().unique().tolist()
-
-                if "bezwijksterkte" in filename.lower():
-                    fname = filename + ".xlsm"
-                    samples = get_sample_names_from_sheet(input_files_folder.joinpath(fname))
-
-                    for s in samples:
-                        if (m := re.search(r'\d+', s)):  # walrus operator for compactness
-                            num = int(m.group())
-                            if num in vak_dict_mapping[vak]["BH_ids"]:
-                                vak_dict_mapping[vak]["strength"] = fname
-                                break  # stop once a match is found
-
-                elif "vermoeiing" in filename.lower():
-                    fname = filename + ".xlsm"
-                    samples = get_sample_names_from_sheet(input_files_folder.joinpath(fname))
-
-                    for s in samples:
-                        if (m := re.search(r'\d+', s)):  # walrus operator for compactness
-                            num = int(m.group())
-                            if num in vak_dict_mapping[vak]["BH_ids"]:
-                                vak_dict_mapping[vak]["fatigue"] = fname
-                                break  # stop once a match is found
+            assign_files_to_vak(vak_dict_mapping, project_master_table, file.stem, input_files_folder)
 
 
 
-
-                elif "stijfheid" in filename.lower():
-
-                    fname = filename + ".xlsm"
-                    samples = get_sample_names_from_sheet(input_files_folder.joinpath(fname))
-
-                    for s in samples:
-                        if (m := re.search(r'\d+', s)):  # walrus operator for compactness
-                            num = int(m.group())
-                            if num in vak_dict_mapping[vak]["BH_ids"]:
-                                vak_dict_mapping[vak]["stiffness"] = fname
-                                break  # stop once a match is found
-                elif 'master' in filename:
-                    continue
-
-        fill_dike_data_table_df(vak_dict_mapping, dike_table_data)
+        fill_dike_data_table_df(vak_dict_mapping, dike_table_data, project_master_table)
 
         for vak_name, vak_files in vak_dict_mapping.items():
 
@@ -469,44 +488,25 @@ if __name__ == "__main__":
             # borehole_ids = list(sample_names_mapping_dict.keys())
             borehole_ids = vak_files["BH_ids"]
             borehole_ids.sort()
+            vak_data = project_master_table.loc[project_master_table['Dijknaam'] == vak_name]
 
-            fill_master_table_data(project_id, vak_name, borehole_ids, master_table_data)
+            fill_master_table_data(project_id, vak_name, borehole_ids, master_table_data, vak_data)
             # There can be one borehole without strength because the test was bad or something.
 
             for borehole_id in borehole_ids:
-                borehole_name = f"BH{borehole_id}"
-                strength_sample_name = sample_names_mapping_dict[borehole_id]["strength"][0]
-                fatigue_sample_name = sample_names_mapping_dict[borehole_id]["fatigue"][0]
-                stiffness_sample_name = sample_names_mapping_dict[borehole_id]["stiffness"][0]
+                bh_data = vak_data.loc[vak_data['Boorkern'] == borehole_id]
 
-                if len(sample_names_mapping_dict[borehole_id]["fatigue"]) > 1:
-                    raise Exception(
-                        f"Sample {sample_names_mapping_dict[borehole_id]['fatigue']} has multiple fatigue samples (project {project_id}). Please modify the file so that there is only one sample per borehole.")
+                process_borehole(project_id, bh_data, borehole_id, base_folder, sample_names_mapping_dict, vak_files)
 
-                borehole_path = base_folder.joinpath(f"P_{project_id}", borehole_name)
-                borehole_path.mkdir(exist_ok=True, parents=True)
+    pd.DataFrame(master_table_data, columns=["project", "borehole", "dijk", "aanlegjaar", "onderzoeksjaar"]) \
+        .to_csv(base_folder / "master_table.csv", index=False)
 
-                fill_borehole_data_csv(borehole_path, borehole_name)
-                fill_sample_data_csv(borehole_path, strength_sample_name, fatigue_sample_name, stiffness_sample_name,
-                                     strength_file)
-                fill_general_table_data(project_id, borehole_id, strength_sample_name, fatigue_sample_name,
-                                        stiffness_sample_name, general_table_data)
+    pd.DataFrame(general_table_data, columns=["project", "borehole", "sample", "HR", "bitumen"]) \
+        .drop_duplicates(subset=["project", "borehole", "sample"]) \
+        .to_csv(base_folder / "general_data.csv", index=False)
 
-                # TODO: what if multiple sheet for one borehole id??
-                fill_strength_data_csv(borehole_path, strength_sample_name, strength_file)
-                fill_fatigue_data_csv(borehole_path, fatigue_sample_name, fatigue_file)
-                fill_stiffness_data_csv(borehole_path, stiffness_sample_name, stiffness_file)
-
-    master_table_df = pd.DataFrame(master_table_data,
-                                   columns=["project", "borehole", "dijk", "aanlegjaar", "onderzoeksjaar"])
-
-    general_data_df = pd.DataFrame(general_table_data, columns=["project", "borehole", "sample", "HR", "bitumen"])
-    general_data_df = general_data_df.drop_duplicates(subset=["project", "borehole", "sample"])
-    df_dikes = pd.DataFrame(data=dike_table_data, columns=["dike_name", "waterboard", "notes"])
-
-    master_table_df.to_csv(base_folder.joinpath("master_table.csv"), index=False)
-    general_data_df.to_csv(base_folder.joinpath("general_data.csv"), index=False)
-    df_dikes.to_csv(base_folder.joinpath("dike_table.csv"), index=False)
+    pd.DataFrame(dike_table_data, columns=["dike_name", "waterboard", "notes"]) \
+        .to_csv(base_folder / "dike_table.csv", index=False)
 
     toc = time.time()
     print(f"Time taken: {toc - tic:.2f} seconds")
