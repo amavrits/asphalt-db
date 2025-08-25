@@ -8,7 +8,7 @@ fi
 
 
 # Delete result path (pass a directory to delete as the first arg).
-DIR="${1:-results/ml/probabilistic_mlp}"
+DIR="${1:-results/ml/mlp}"
 if [ -n "$DIR" ]; then
   if [ -d "$DIR" ]; then
     echo "Deleting directory: $DIR"
@@ -22,7 +22,7 @@ fi
 
 
 n_splits=1
-epochs=10_000
+epochs=100_000
 lr=0.0001
 #bitumens=(True False)
 #logys=(False True)
@@ -42,15 +42,13 @@ for bitumen in "${bitumens[@]}"; do
           --epochs=$epochs \
           --lr=$lr \
           --use_bitumen \
-          --log_y \
-          --probabilistic
+          --log_y
         else
           python -m main.ml.mlp.run_mlp \
           --n_splits=$n_splits \
           --epochs=$epochs \
           --lr=$lr \
-          --use_bitumen \
-          --probabilistic
+          --use_bitumen
         fi
       else
         if [ "$logy" = True ]; then
@@ -58,14 +56,12 @@ for bitumen in "${bitumens[@]}"; do
           --n_splits=$n_splits \
           --epochs=$epochs \
           --lr=$lr \
-          --log_y \
-          --probabilistic
+          --log_y
         else
           python -m main.ml.mlp.run_mlp \
           --n_splits=$n_splits \
           --epochs=$epochs \
-          --lr=$lr \
-          --probabilistic
+          --lr=$lr
         fi
       fi
     done

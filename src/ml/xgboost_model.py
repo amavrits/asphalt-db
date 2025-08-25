@@ -27,14 +27,15 @@ def train(X_train, y_train, param_grid, cv=5):
     return model
 
 
-def predict(model, X_train, y_train, X_test, y_test):
+
+def predict(model, X_train, y_train, X_test, y_test, log_y=False):
 
     X = np.vstack((X_train, X_test))
     y = np.concat((y_train, y_test))
 
     y_pred_train = model.predict(X_train)
     y_pred_test = model.predict(X_test)
-    y_pred_all = model.predict(X)
+    y_pred_all = model.predict(X, alpha)
 
     idx = np.argsort(y)
     y = y[idx]
@@ -43,6 +44,11 @@ def predict(model, X_train, y_train, X_test, y_test):
     test_flag = np.zeros(y.size).astype(bool)
     test_flag[-y_test.size:] = 1
     test_flag = test_flag[idx]
+
+    if log_y:
+        y_pred_train = np.exp(y_pred_train)
+        y_pred_test = np.exp(y_pred_test)
+        y_pred_all = np.exp(y_pred_all)
 
     predictions = {
         "y_train": y_train,
@@ -58,8 +64,6 @@ def predict(model, X_train, y_train, X_test, y_test):
     }
 
     return predictions
-
-
 
 
 if __name__ == "__main__":

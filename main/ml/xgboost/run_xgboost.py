@@ -1,9 +1,11 @@
+import os
 import pandas as pd
 import numpy as np
-from main.ml.probabilistic_mlp.plmp_utils import *
 from pathlib import Path
+from src.ml.xgboost_model import *
+from main.ml.xgboost.xgboost_utils import *
+from sklearn.model_selection import train_test_split
 import random
-import shutil
 from tqdm import tqdm
 import argparse
 
@@ -16,35 +18,32 @@ def empty_dir(dir):
             item.unlink()
 
 
-def run(n_splits, use_bitumen, epochs, lr, hidden_layers, log_y):
+def run(n_splits, use_bitumen, params, log_y):
 
     SCRIPT_PATH = Path(__file__).parent
     if args.use_bitumen:
         BASE_DATA_PATH = SCRIPT_PATH.parent.parent.parent / "data/from_bernadette/gold/w_bitumen"
-        BASE_RESULT_PATH = SCRIPT_PATH.parent.parent.parent / "results/ml/probabilistic_mlp/w_bitumen"
+        BASE_RESULT_PATH = SCRIPT_PATH.parent.parent.parent / "results/ml/xgboost/w_bitumen"
     else:
         BASE_DATA_PATH = SCRIPT_PATH.parent.parent.parent / "data/from_bernadette/gold/wo_bitumen"
-        BASE_RESULT_PATH = SCRIPT_PATH.parent.parent.parent / "results/ml/probabilistic_mlp/wo_bitumen"
+        BASE_RESULT_PATH = SCRIPT_PATH.parent.parent.parent / "results/ml/xgboost/wo_bitumen"
 
     BASE_RESULT_PATH.mkdir(exist_ok=True, parents=True)
 
     BASE_RESULT_PATH = BASE_RESULT_PATH / f"logy_{str(log_y)}"
-
-    params = (epochs, lr, hidden_layers)
 
     run_splits(
         data_path=BASE_DATA_PATH,
         base_result_path=BASE_RESULT_PATH,
         n_splits=n_splits,
         params=params,
-        log_y=log_y
+        log_y=log_y,
     )
 
     compile_splits(BASE_RESULT_PATH)
 
 
 def run_splits(data_path, base_result_path, n_splits, params, log_y=False):
-
     splits = sorted([p for p in data_path.iterdir() if p.is_dir()])
 
     random.seed(42)
@@ -52,7 +51,7 @@ def run_splits(data_path, base_result_path, n_splits, params, log_y=False):
     splits_to_run = [splits[i] for i in idx_splits_to_run]
 
     for i_split, split in enumerate(tqdm(splits_to_run)):
-        result_path = base_result_path / f"split_{i_split+1}"
+        result_path = base_result_path / f"{split.stem}"
         result_path.mkdir(parents=True, exist_ok=True)
         model_predictions = run_pipeline(
             data_path=split,
@@ -64,18 +63,16 @@ def run_splits(data_path, base_result_path, n_splits, params, log_y=False):
 
 
 def compile_splits(base_path):
-
     split_folders = [f for f in base_path.iterdir() if f.is_dir()]
 
     results = {}
     for split_folder in split_folders:
-
         split_key = split_folder.stem
 
-        with open(split_folder/"model_predictions.json", "r") as f:
+        with open(split_folder / "model_predictions.json", "r") as f:
             model_predictions = json.load(f)
 
-        with open(split_folder/"lr_predictions.json", "r") as f:
+        with open(split_folder / "lr_predictions.json", "r") as f:
             lr_predictions = json.load(f)
 
         split_results = {
@@ -103,7 +100,7 @@ def compile_splits(base_path):
 
     lr_r2s = [[val["lr_r2_train"], val["lr_r2_test"], val["lr_r2_all"]] for val in results.values()]
     model_r2s = [[val["model_r2_train"], val["model_r2_test"], val["model_r2_all"]] for val in results.values()]
-    
+
     lr_r2_avg = np.array(lr_r2s).mean(axis=0).tolist()
     model_r2_avg = np.array(model_r2s).mean(axis=0).tolist()
     avg_lines = [
@@ -132,29 +129,37 @@ def compile_splits(base_path):
 
     for line in lines:
         print(line, end="")
-    
-    with open(base_path/"r2s.txt", "w") as f:
-        f.writelines(lines)  
-    
+
+    split_lines = [
+        f"Split {key} - Test:  LR R²={val['lr_r2_test']:.2f}    Model R²={val['model_r2_test']:.2f}\n"
+        for (key, val) in results.items()
+    ]
+    with open(base_path / "r2s.txt", "w") as f:
+        f.writelines(lines + ["\n"] + split_lines)
+
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n_splits", type=int, default=10)
-    parser.add_argument("--epochs", type=int, default=10_000)
-    parser.add_argument("--lr", type=float, default=1e-4)
+    parser.add_argument("--n_splits", type=int, default=2)
     parser.add_argument("--use_bitumen", action="store_true")
     parser.add_argument("--log_y", action="store_true")
     args = parser.parse_args()
 
-    hidden_layers = [256, 128, 64, 32]
+    params = {
+        'n_estimators': [500, 1000, 2000],
+        'max_depth': [3, 5, 7],
+        'learning_rate': [0.001, 0.005, 0.01, 0.05],
+        'subsample': [0.8, 1.0],
+        'colsample_bytree': [0.8, 1.0],
+        'reg_alpha': [0, 0.1],
+        'reg_lambda': [1.0, 1.5]
+    }
 
     run(
         n_splits=args.n_splits,
         use_bitumen=args.use_bitumen,
-        epochs=args.epochs,
-        lr=args.lr,
-        hidden_layers=hidden_layers,
-        log_y=args.log_y
+        params=params,
+        log_y=args.log_y,
     )
 

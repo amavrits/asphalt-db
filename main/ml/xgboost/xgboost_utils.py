@@ -3,28 +3,22 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from sklearn.model_selection import train_test_split
-from src.ml.utils import *
-from src.ml.pmlp_model import *
+from sympy import false
+
+from src.ml.xgboost_model import *
 import json
+import joblib
 import matplotlib.pyplot as plt
 import warnings
 
 warnings.filterwarnings("ignore")
 
 
-def train(X_train, y_train, epochs, lr, hidden_layers, path=None, device="cpu", verbose=False):
-    model = ProbabilisticMLPRegressor(input_dim=X_train.shape[1], hidden_layers=hidden_layers, dropout_rate=0.2, device=device)
-    model.fit(X_train, y_train, epochs, lr, verbose)
-    if path is not None:
-        torch.save(model.state_dict(), path / "model.pth")
-    return model
-
-
 def make_predictions(model, X_train, y_train, X_test, y_test, log_y=False):
     predictions = {
-        "mean": predict(model, X_train, y_train, X_test, y_test, log_y, alpha=0.5),
-        "lower": predict(model, X_train, y_train, X_test, y_test, log_y, alpha=0.05),
-        "upper": predict(model, X_train, y_train, X_test, y_test, log_y, alpha=0.95)
+        "mean": predict(model, X_train, y_train, X_test, y_test, log_y),
+        "lower": predict(model, X_train, y_train, X_test, y_test, log_y),
+        "upper": predict(model, X_train, y_train, X_test, y_test, log_y)
     }
     return predictions
 
@@ -68,11 +62,12 @@ def run_pipeline(data_path, result_path, params, log_y=False, verbose=False):
 
     X_train, y_train, X_test, y_test, X_timeline = load_data(data_path)
 
-    epochs, lr, hidden_layers = params
     if log_y:
-        model = train(X_train, np.log(y_train), epochs, lr, hidden_layers, result_path, "cpu", verbose)
+        model = train(X_train, np.log(y_train), params)
     else:
-        model = train(X_train, y_train, epochs, lr, hidden_layers, result_path, "cpu", verbose)
+        model = train(X_train, y_train, params)
+
+    joblib.dump(model, result_path/"model.json")
 
     model_predictions = make_predictions(model, X_train, y_train, X_test, y_test, log_y)
     export_predictions(model_predictions, result_path/"model_predictions.json")
@@ -84,36 +79,12 @@ def run_pipeline(data_path, result_path, params, log_y=False, verbose=False):
     plot_path.mkdir(exist_ok=True, parents=True)
     plot(model_predictions, lr_predictions, plot_path)
 
-    plot_timelines(model, X_timeline, X_train, y_train, plot_path)
+    plot_model_timelines(model, X_timeline, X_train, y_train, plot_path, quantiles=False)
 
     return model_predictions
 
 
 if __name__ == "__main__":
 
-    # Load Data
-    SCRIPT_DIR = Path(__file__).parent
-    data_path = SCRIPT_DIR.parent.parent.parent / "data"
-    data_file = data_path / "from_bernadette/processed_data.csv"
-    result_path = SCRIPT_DIR.parent.parent.parent / "results/ml/probabilistic_mlp"
-    result_path.mkdir(parents=True, exist_ok=True)
-
-    df = pd.read_csv(data_file)
-
-    X, y = get_data(df)
-
-    # Train-Test Split
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
-
-    # Train model
-    epochs = 2
-    lr = 1e-4
-    hidden_layers = [256, 128, 64, 32]
-    model = train(X_train, y_train, epochs, lr, hidden_layers, result_path, verbose=True)
-
-    # Evaluate
-    model_predictions = make_predictions(model, X_train, y_train, X_test, y_test)
-
-    #Plot
-    plot_timelines(model, X_timeline, X_train, y_train, result_path)
+    pass
 

@@ -44,20 +44,21 @@ def generate_timeline_data(df, feat_cols):
         columns=["age"]
     )
 
+    df_timeline["void_ratio"] = 0
+    void_ratio_deciles_idxs = pd.qcut(df["void_ratio"], q=10, labels=False).values
+    unique_void_ratio_idxs = np.sort(np.unique(void_ratio_deciles_idxs))
+    df_timelines = []
+    for unique_void_ratio_idx in unique_void_ratio_idxs:
+        df_timeline_decile = df_timeline.copy()
+        df_timeline_decile["void_ratio"] = df.loc[void_ratio_deciles_idxs==unique_void_ratio_idx, "void_ratio"].mean()
+        df_timelines.append(df_timeline_decile)
+    df_timeline = pd.concat(df_timelines)
+
     if use_bitumen:
         df_bitumen = generate_bitumen_feats(df)
         df_timeline["bitumen"] = df_bitumen["bitumen"].mean()
     else:
         df_timeline["bitumen"] = 1
-
-    df_timeline["void_ratio"] = 0
-    void_ratio_deciles = pd.qcut(df["void_ratio"], q=10, labels=False).values
-    df_timelines = []
-    for (void_ratio_decile_bottom, void_ratio_decile_top) in zip(void_ratio_deciles[:-1], void_ratio_deciles[1:]):
-        df_timeline_decile = df_timeline.copy()
-        df_timeline_decile["void_ratio"] = (void_ratio_decile_bottom + void_ratio_decile_top) / 2
-        df_timelines.append(df_timeline_decile)
-    df_timeline = pd.concat(df_timelines)
 
     df_timeline = generate_base_feats(df_timeline)
     if use_bitumen:

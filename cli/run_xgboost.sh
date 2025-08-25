@@ -8,7 +8,7 @@ fi
 
 
 # Delete result path (pass a directory to delete as the first arg).
-DIR="${1:-results/ml/probabilistic_mlp}"
+DIR="${1:-results/ml/xgboost}"
 if [ -n "$DIR" ]; then
   if [ -d "$DIR" ]; then
     echo "Deleting directory: $DIR"
@@ -21,13 +21,13 @@ else
 fi
 
 
-n_splits=1
+n_splits=100
 epochs=10_000
 lr=0.0001
-#bitumens=(True False)
-#logys=(False True)
-bitumens=(False)
-logys=(False)
+bitumens=(True False)
+logys=(False True)
+#bitumens=(False)
+#logys=(False)
 
 python -m main.ml.prepare_data
 
@@ -37,35 +37,23 @@ for bitumen in "${bitumens[@]}"; do
       echo "Log Y: $logy"
       if [ "$bitumen" = True ]; then
         if [ "$logy" = True ]; then
-          python -m main.ml.mlp.run_mlp \
+          python -m main.ml.xgboost.run_xgboost \
           --n_splits=$n_splits \
-          --epochs=$epochs \
-          --lr=$lr \
           --use_bitumen \
-          --log_y \
-          --probabilistic
+          --log_y
         else
-          python -m main.ml.mlp.run_mlp \
+          python -m main.ml.xgboost.run_xgboost \
           --n_splits=$n_splits \
-          --epochs=$epochs \
-          --lr=$lr \
-          --use_bitumen \
-          --probabilistic
+          --use_bitumen
         fi
       else
         if [ "$logy" = True ]; then
-          python -m main.ml.mlp.run_mlp \
+          python -m main.ml.xgboost.run_xgboost \
           --n_splits=$n_splits \
-          --epochs=$epochs \
-          --lr=$lr \
-          --log_y \
-          --probabilistic
+          --log_y
         else
-          python -m main.ml.mlp.run_mlp \
-          --n_splits=$n_splits \
-          --epochs=$epochs \
-          --lr=$lr \
-          --probabilistic
+          python -m main.ml.xgboost.run_xgboost \
+          --n_splits=$n_splits
         fi
       fi
     done

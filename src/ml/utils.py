@@ -192,24 +192,44 @@ def plot_quantiles(predictions, plot_path):
         fig.savefig(plot_path/f"quantiles_{min(plot_idx)+1}-{max(plot_idx)+1}.png")
 
 
-def plot_timelines(model, X_timeline, X_train, y_train, plot_path):
+def plot_model_timelines(model, X_timeline, X_train, y_train, plot_path, quantiles=False):
 
     age_idx = 0
     void_ratio_idx = 1
 
+    def lr(x):
+        age = x[:, 0]
+        void_ratio = x[:, 1]
+        y = np.where(
+            age <= 40,
+            10.5852 - 0.0054 * age ** 2 + 8.341e-5 * age ** 3 - 0.3077 * void_ratio,
+            6.8238 - 0.0466 * void_ratio ** 2 + 0.0026 * void_ratio ** 3 - 5.17e-6 * void_ratio ** 2 * age ** 2
+        )
+        return y
+
     void_ratios = np.sort(np.unique(X_timeline[:, 1]))
     for void_ratio in void_ratios:
 
+        lims = (0.8*X_train[:, 1], 1.2*X_train[:, 1])
+        X_train_void_ratio = X_train[np.logical_and(lims[0]<=y_train, y_train<=lims[1])]
+        y_train_void_ratio = y_train[np.logical_and(lims[0]<=y_train, y_train<=lims[1])]
+
         X_void_ratio = X_timeline[X_timeline[:, 1]==void_ratio]
-        y_hat = model.predict(X_void_ratio)
-        y_05 = model.predict(X_void_ratio, alpha=0.05)
-        y_95 = model.predict(X_void_ratio, alpha=0.05)
+        y_hat_lr = lr(X_void_ratio)
+        if quantiles:
+            y_hat = model.predict(X_void_ratio, alpha=0.50)
+            y_05 = model.predict(X_void_ratio, alpha=0.05)
+            y_95 = model.predict(X_void_ratio, alpha=0.95)
+        else:
+            y_hat = model.predict(X_void_ratio)
 
         fig = plt.figure(figsize=(16, 6))
-        plt.scatter(X_train[:, age_idx], y_train, color="b", marker="x", label="Training data")
+        plt.scatter(X_train_void_ratio[:, age_idx], y_train_void_ratio, color="k", marker="x", label="Training data")
+        plt.plot(X_void_ratio[:, age_idx], y_hat_lr, color="b", label="Linear Regression")
         plt.plot(X_void_ratio[:, age_idx], y_hat, color="r", label="Model")
-        plt.plot(X_void_ratio[:, age_idx], y_05, linestyle="--", color="r")
-        plt.plot(X_void_ratio[:, age_idx], y_95, linestyle="--", color="r")
+        if quantiles:
+            plt.plot(X_void_ratio[:, age_idx], y_05, linestyle="--", color="r", label="90% PI")
+            plt.plot(X_void_ratio[:, age_idx], y_95, linestyle="--", color="r")
         plt.xlabel("Age", fontsize=12)
         plt.ylabel("Strength [kPa]", fontsize=12)
         plt.grid()
