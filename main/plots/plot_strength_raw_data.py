@@ -36,7 +36,7 @@ query_sample_data =  (
     .join(Borehole)
     .where(
         (Sample.sample_name == sample) &
-        (Borehole.borehole_name == borehole)  &    )
+        (Borehole.borehole_name == borehole)  )
 )
 v = query_sample_data[0].v
 D = query_sample_data[0].thickness
@@ -54,7 +54,7 @@ query_raw_data =  (
         (Borehole.borehole_name == borehole)
     )
 )
-
+print(query_raw_data)
 data = [
     {
         "Verplaatsing": -row.V_org,  #TODO why is it negative in db ???
@@ -62,6 +62,7 @@ data = [
     }
     for row in query_raw_data
 ]
+print(data)
 originele_data = pd.DataFrame(data)
 
 

@@ -355,8 +355,8 @@ def assign_files_to_vak(vak_dict_mapping, project_master_table: pd.DataFrame, fi
 
     for vak in vak_list:
         vak_dict_mapping.setdefault(vak, {})
-        vak_data = project_master_table.loc[project_master_table['Dijknaam'] == vak, 'Boorkern']
-        vak_dict_mapping[vak]["BH_ids"] = vak_data.dropna().unique().tolist()
+        vak_data = project_master_table.loc[project_master_table['Dijknaam'] == vak, 'boorkern_id']
+        vak_dict_mapping[vak]["BH_ids"] = [int(bh_id) for bh_id in vak_data.dropna().unique().tolist()]
 
         for keyword, attr in KEYWORD_MAP.items():
             if keyword in filename.lower():
@@ -402,22 +402,24 @@ if __name__ == "__main__":
     tic = time.time()
 
     SCRIPT_DIR = Path(__file__).parent
-    base_folder = SCRIPT_DIR.parent / "data/automated_data_new"
+
+    # Input path to modify
+    base_folder = SCRIPT_DIR.parent / "data/automated_data_new_demo" # Path to store the formatted data structure
     input_files_folder = Path(
         r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data2')  # make the path a env variable
-
     input_general_data_file = Path(r"c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data2\Database Asfalt Excel.xlsx")
 
+
+    ## START
     if base_folder.is_dir():
         shutil.rmtree(base_folder)
     base_folder.mkdir(exist_ok=True, parents=True)
 
-    input_general_data_table = pd.read_excel(input_general_data_file, sheet_name="Database", dtype={"Projectnummer": str})
-    # convert the column 'Projectnummer' to string
+    input_general_data_table = pd.read_excel(input_general_data_file, sheet_name="Database", dtype={"Projectnummer": str,})
     input_general_data_table['Projectnummer'] = input_general_data_table['Projectnummer'].astype(str)
     projects_ids = input_general_data_table['Projectnummer'].dropna().unique().tolist()
     projects_ids.reverse()
-    projects_ids = ['1901142',  '0702493']
+    projects_ids = ['1901142',  '0702493'] # TODO : process only the projects in input_files_folder
 
     fill_project_data_csv(base_folder, projects_ids)
 
@@ -494,7 +496,7 @@ if __name__ == "__main__":
             # There can be one borehole without strength because the test was bad or something.
 
             for borehole_id in borehole_ids:
-                bh_data = vak_data.loc[vak_data['Boorkern'] == borehole_id]
+                bh_data = vak_data.loc[vak_data['boorkern_id'] == borehole_id]
 
                 process_borehole(project_id, bh_data, borehole_id, base_folder, sample_names_mapping_dict, vak_files)
 

@@ -37,8 +37,8 @@ query_strength_data =  (
     .join(ProjectDijk)
     .join(Project)
     .where(
-        (Project.project_name == project)
-        # (Borehole.borehole_name == "BH1")
+        (Project.project_name == project) &
+        (Sample.sample_name == "1V")
     )
 )
 
