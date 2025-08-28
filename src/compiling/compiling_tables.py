@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
-
+from tabulate import tabulate
 from src.parsing.parsing_tables import make_headtable
 from src.processing.processing_tables import make_table2
 

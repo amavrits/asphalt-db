@@ -8,6 +8,7 @@ Created on Thu Jul 24 13:55:27 2025
 import numpy as np
 import pandas as pd
 import warnings
+from tabulate import tabulate
 warnings.filterwarnings("ignore")
 
 def make_headtable(file_path, projectnummers, dijktraject):
@@ -33,6 +34,7 @@ def make_headtable(file_path, projectnummers, dijktraject):
     
         # Output
         print(f"Projectnummer: {nummer}")
-        print(df_merged)
-        
+        # print(df_merged)
+        print(tabulate(df_merged, headers='keys', tablefmt='pretty'))
+
     return df_merged
