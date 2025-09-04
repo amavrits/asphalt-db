@@ -404,10 +404,10 @@ if __name__ == "__main__":
     SCRIPT_DIR = Path(__file__).parent
 
     # Input path to modify
-    base_folder = SCRIPT_DIR.parent / "data/automated_data_new_demo" # Path to store the formatted data structure
+    base_folder = Path(r'C:\Users\marloes.slokker\Infram BV\Infram Projecten - 23i740_KC WAB 2024\Uitvoering\output_script_levensduurmodel') # Path to store the formatted data structure
     input_files_folder = Path(
-        r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data2')  # make the path a env variable
-    input_general_data_file = Path(r"c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data2\Database Asfalt Excel.xlsx")
+        r'C:\Users\marloes.slokker\Infram BV\Infram Projecten - 23i740_KC WAB 2024\Uitvoering\levensduurmodel WAB\all_projectnumbers_files')  # make the path a env variable
+    input_general_data_file = Path(r"C:\Users\marloes.slokker\Infram BV\Infram Projecten - 23i740_KC WAB 2024\Uitvoering\levensduurmodel WAB\Database Asfalt Excel.xlsx")
 
 
     ## START
@@ -419,7 +419,7 @@ if __name__ == "__main__":
     input_general_data_table['Projectnummer'] = input_general_data_table['Projectnummer'].astype(str)
     projects_ids = input_general_data_table['Projectnummer'].dropna().unique().tolist()
     projects_ids.reverse()
-    projects_ids = ['1901142',  '0702493'] # TODO : process only the projects in input_files_folder
+    projects_ids = ['1600982'] # TODO : process only the projects in input_files_folder
 
     fill_project_data_csv(base_folder, projects_ids)
 

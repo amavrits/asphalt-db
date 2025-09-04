@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     SCRIPT_DIR = Path(__file__).parent
 
-    data_path = SCRIPT_DIR.parent / "data/automated_data_new_demo"
+    data_path = Path(r'C:\Users\marloes.slokker\Infram BV\Infram Projecten - 23i740_KC WAB 2024\Uitvoering\output_script_levensduurmodel')
 
     dike_table, project_table, master_table, general_data = parse_base_data(data_path)
 
