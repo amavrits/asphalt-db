@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     SCRIPT_DIR = Path(__file__).parent
 
-    data_path = SCRIPT_DIR.parent / "data/automated_data_new_demo_4_sept"
+    data_path = SCRIPT_DIR.parent / "data/automated_data_4"
 
     dike_table, project_table, master_table, general_data = parse_base_data(data_path)
 
