@@ -179,9 +179,12 @@ def iter_dikes(project_name, master_table, dike_table):
 
 
 def add_samples(borehole_name, project_name, master_table, test_folder, data_type="raw"):
-    df = pd.read_csv(test_folder / f"{data_type}_data.csv", index_col="sample_name")
-    # with open(test_folder / "test_data.json", "r") as f:
-    #     test_data = json.load(f)
+    try:
+        df = pd.read_csv(test_folder / f"{data_type}_data.csv", index_col="sample_name")
+    except FileNotFoundError:
+        print(f"No {data_type} data found in {test_folder}, skipping.")
+        return
+
     for sample_name in df.index.unique():
         print(borehole_name, sample_name)
         if len(df) == 1:

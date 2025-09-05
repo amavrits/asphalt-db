@@ -68,8 +68,8 @@ if __name__ == "__main__":
                 for test_folder in test_folder_list:
 
                     for data_type in ["raw", "processed", "summarized"]:
-                        if test_folder.stem == 'stiffness' and data_type == "processed": # stiffness data does not have processed data table
-                            continue # TODO later when we have stiffness data
+                        if test_folder.stem == 'stiffness' and data_type == "processed":
+                            continue # stiffness data does not have processed data table
                         add_samples(borehole_name, project_name, master_table, test_folder, data_type)
 
     db.close()

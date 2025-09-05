@@ -388,6 +388,10 @@ def process_borehole(project_id, bh_data: pd.DataFrame, borehole_id, base_folder
                 "DDDDDD"
             ]
         }
+    else:
+        test_path = borehole_path / f"strength"
+        test_path.mkdir(exist_ok=True, parents=True)
+
     if fatigue_file:
         fatigue_sample = sample_names_mapping_dict[borehole_id]["fatigue"][0]
         fill_fatigue_data_csv(borehole_path, fatigue_sample, fatigue_file)
@@ -396,7 +400,11 @@ def process_borehole(project_id, bh_data: pd.DataFrame, borehole_id, base_folder
             "notes": [
                 "DDDDDD"
             ]
-        },
+        }
+    else:
+        test_path = borehole_path / f"fatigue"
+        test_path.mkdir(exist_ok=True, parents=True)
+
     if stiffness_file:
         stiffness_sample = sample_names_mapping_dict[borehole_id]["stiffness"][0]
         fill_stiffness_data_csv(borehole_path, stiffness_sample, stiffness_file)
@@ -406,6 +414,9 @@ def process_borehole(project_id, bh_data: pd.DataFrame, borehole_id, base_folder
                 "DDDDDD"
             ]
         }
+    else:
+        test_path = borehole_path / f"stiffness"
+        test_path.mkdir(exist_ok=True, parents=True)
 
     fill_borehole_data_csv(borehole_path, borehole_name)
     fill_sample_data_csv(borehole_path, sample_data)
