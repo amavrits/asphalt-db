@@ -69,7 +69,8 @@ class ProbabilisticMLPRegressor(nn.Module):
         y_tensor = torch.tensor(y, dtype=torch.float32).view(-1, 1).to(self.device)
 
         # Loss & Optimizer
-        criterion = nn.MSELoss()
+        # criterion = nn.MSELoss()
+        criterion = nn.L1Loss()
         optimizer = optim.Adam(self.parameters(), lr=lr, weight_decay=1e-4)
 
         self.losses = []

@@ -22,12 +22,14 @@ else
 fi
 
 
-n_splits=100
-epochs=10_000
+n_splits=2
+epochs=100_000
 lr=0.0001
-bitumens=(True False)
-logys=(False True)
+#bitumens=(True False)
+#logys=(False True)
 
+bitumens=(True)
+logys=(False)
 
 for bitumen in "${bitumens[@]}"; do
     echo "Bitumen: $bitumen"

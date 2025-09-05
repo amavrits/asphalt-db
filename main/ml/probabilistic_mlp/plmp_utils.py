@@ -47,6 +47,12 @@ def load_data(path):
     X_test = np.load(path/"X_test.npy", allow_pickle=True)
     y_test = np.load(path/"y_test.npy", allow_pickle=True)
     X_timeline = np.load(path/"X_timeline.npy", allow_pickle=True)
+
+    y_train = y_train[X_train[:, 0]>0]
+    X_train = X_train[X_train[:, 0]>0]
+    y_test = y_test[X_test[:, 0]>0]
+    X_test = X_test[X_test[:, 0]>0]
+
     return X_train, y_train, X_test, y_test, X_timeline
 
 

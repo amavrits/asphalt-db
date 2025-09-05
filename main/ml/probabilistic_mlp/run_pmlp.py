@@ -140,7 +140,7 @@ def compile_splits(base_path):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n_splits", type=int, default=10)
+    parser.add_argument("--n_splits", type=int, default=1)
     parser.add_argument("--epochs", type=int, default=10_000)
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--use_bitumen", action="store_true")
