@@ -13,7 +13,7 @@ from main.generate_template_master_table import input_files_folder
 from src.parsing.fatigue_parsing import read_raw_fatigue, read_processed_fatigue, read_summary_fatigue
 from src.parsing.stiffness_parsing import read_raw_stiffness
 from src.parsing.strength_parsing import read_data, read_parameters
-from src.processing.strength_processing import make_table_raw_data, calc_linear_fit, correct_data, define_sec_modulus, \
+from src.processing.strength_processing import calc_linear_fit, correct_data, define_sec_modulus, \
     calc_fracture_data
 
 
@@ -68,9 +68,12 @@ def fill_general_table_data(project_id: int, borehole_id, sample_name_strength: 
     # Fillers for HR and bitumen, these will be filled later with the data from Bernadette
     HR =  bh_data['HR'].iloc[0] if not bh_data.empty else None
     bitumen = bh_data['Bitumengehalte NEN'].iloc[0] if not bh_data.empty else None
-    general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_strength, HR, bitumen])
-    general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_fatigue, HR, bitumen])
-    general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_stiffness, HR, bitumen])
+    if sample_name_strength:
+        general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_strength, HR, bitumen])
+    if sample_name_fatigue:
+        general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_fatigue, HR, bitumen])
+    if sample_name_stiffness:
+        general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_stiffness, HR, bitumen])
     return general_table_data
 
 
@@ -112,33 +115,7 @@ def fill_borehole_data_csv(borehole_path: Path, borehole_name: str):
         json.dump(borehole_data, f, indent=4)
 
 
-def fill_sample_data_csv(borehole_path: Path, sample_name_strength: str, sample_name_fatigue: str,
-                         sample_name_stiffness: str, strength_file: Path):
-    D, h, strength, v = read_parameters(strength_file, sample_name_strength)
-
-    sample_data = {sample_name_strength: {
-        "depth": 0,
-        "thickness": D,
-        "height": h,
-        "strength": strength,
-        "v": v,
-        "notes": [
-            "DDDDDD"
-        ]
-    },
-        sample_name_fatigue: {
-            "depth": 0,
-            "notes": [
-                "DDDDDD"
-            ]
-        },
-        sample_name_stiffness: {
-            "depth": 0,
-            "notes": [
-                "DDDDDD"
-            ]
-        }
-    }
+def fill_sample_data_csv(borehole_path: Path, sample_data: dict):
 
     with open(borehole_path / "sample_data.json", "w") as f:
         json.dump(sample_data, f, indent=4)
@@ -338,7 +315,13 @@ def get_sample_names_from_sheet(file: Path) -> list[str]:
 
     # remove string like ORG, Invoer, Resultaten, Grafieken, .....
     samples = [str(sample) for sample in samples if not re.match(
-        r'^(ORG|Invoer|Resultaten|Grafieken|Org|Vermoeiingslijn|Layout voor rapportage|Resultaat|Blad1)$', sample)]
+        r'^(ORG|Invoer|Resultaten|Grafieken|Org|Vermoeiingslijn|Layout voor rapportage|Resultaat|Blad1|Blad2)$', sample)]
+
+    # remove all strings without a digit:
+    samples = [s for s in samples if re.search(r'\d+', s)]
+
+    # remove all strings which contains Blad:
+    samples = [s for s in samples if 'Blad' not in s]
     return samples
 
 
@@ -376,13 +359,10 @@ def process_borehole(project_id, bh_data: pd.DataFrame, borehole_id, base_folder
     borehole_path = base_folder / f"P_{project_id}" / borehole_name
     borehole_path.mkdir(exist_ok=True, parents=True)
 
-    strength_file = input_files_folder / vak_files.get("strength")
-    fatigue_file = input_files_folder / vak_files.get("fatigue")
-    stiffness_file = input_files_folder / vak_files.get("stiffness")
 
-    strength_sample = sample_names_mapping_dict[borehole_id]["strength"][0]
-    fatigue_sample = sample_names_mapping_dict[borehole_id]["fatigue"][0]
-    stiffness_sample = sample_names_mapping_dict[borehole_id]["stiffness"][0]
+    strength_file = input_files_folder / vak_files.get("strength") if "strength" in vak_files else None
+    fatigue_file = input_files_folder / vak_files.get("fatigue") if "fatigue" in vak_files else None
+    stiffness_file = input_files_folder / vak_files.get("stiffness") if "stiffness" in vak_files else None
 
     if len(sample_names_mapping_dict[borehole_id]["fatigue"]) > 1:
         raise ValueError(
@@ -390,12 +370,46 @@ def process_borehole(project_id, bh_data: pd.DataFrame, borehole_id, base_folder
             f"(project {project_id}). Please fix the file so only one sample per borehole exists."
         )
 
+    strength_sample, fatigue_sample, stiffness_sample = None, None, None  # will be modified to actual names if files exist
+    sample_data = {}
+    if strength_file:
+        strength_sample = sample_names_mapping_dict[borehole_id]["strength"][0]
+        fill_strength_data_csv(borehole_path, strength_sample, strength_file)
+
+        D, h, strength, v = read_parameters(strength_file, strength_sample)
+
+        sample_data[strength_sample] = {
+            "depth": 0,
+            "thickness": D,
+            "height": h,
+            "strength": strength,
+            "v": v,
+            "notes": [
+                "DDDDDD"
+            ]
+        }
+    if fatigue_file:
+        fatigue_sample = sample_names_mapping_dict[borehole_id]["fatigue"][0]
+        fill_fatigue_data_csv(borehole_path, fatigue_sample, fatigue_file)
+        sample_data[fatigue_sample] =  {
+            "depth": 0,
+            "notes": [
+                "DDDDDD"
+            ]
+        },
+    if stiffness_file:
+        stiffness_sample = sample_names_mapping_dict[borehole_id]["stiffness"][0]
+        fill_stiffness_data_csv(borehole_path, stiffness_sample, stiffness_file)
+        sample_data[stiffness_sample]= {
+            "depth": 0,
+            "notes": [
+                "DDDDDD"
+            ]
+        }
+
     fill_borehole_data_csv(borehole_path, borehole_name)
-    fill_sample_data_csv(borehole_path, strength_sample, fatigue_sample, stiffness_sample, strength_file)
+    fill_sample_data_csv(borehole_path, sample_data)
     fill_general_table_data(project_id, borehole_id, strength_sample, fatigue_sample, stiffness_sample, general_table_data, bh_data)
-    fill_strength_data_csv(borehole_path, strength_sample, strength_file)
-    fill_fatigue_data_csv(borehole_path, fatigue_sample, fatigue_file)
-    fill_stiffness_data_csv(borehole_path, stiffness_sample, stiffness_file)
 
 
 if __name__ == "__main__":
@@ -404,9 +418,9 @@ if __name__ == "__main__":
     SCRIPT_DIR = Path(__file__).parent
 
     # Input path to modify
-    base_folder = SCRIPT_DIR.parent / "data/automated_data_new_demo" # Path to store the formatted data structure
+    base_folder = SCRIPT_DIR.parent / "data/automated_data_4" # Path to store the formatted data structure
     input_files_folder = Path(
-        r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data2')  # make the path a env variable
+        r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data4')  # make the path a env variable
     input_general_data_file = Path(r"c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data2\Database Asfalt Excel.xlsx")
 
 
@@ -419,7 +433,7 @@ if __name__ == "__main__":
     input_general_data_table['Projectnummer'] = input_general_data_table['Projectnummer'].astype(str)
     projects_ids = input_general_data_table['Projectnummer'].dropna().unique().tolist()
     projects_ids.reverse()
-    projects_ids = ['1901142',  '0702493'] # TODO : process only the projects in input_files_folder
+    projects_ids = ['1700160'] # TODO : process only the projects in input_files_folder
 
     fill_project_data_csv(base_folder, projects_ids)
 
@@ -449,13 +463,23 @@ if __name__ == "__main__":
 
         for vak_name, vak_files in vak_dict_mapping.items():
 
-            strength_file = input_files_folder.joinpath(vak_files.get("strength"))
-            fatigue_file = input_files_folder.joinpath(vak_files.get("fatigue"))
-            stiffness_file = input_files_folder.joinpath(vak_files.get("stiffness"))
+            if "strength" in vak_files:
+                strength_file = input_files_folder.joinpath(vak_files.get("strength"))
+                sample_name_strength = get_sample_names_from_sheet(strength_file)
+            else:
+                sample_name_strength = []
 
-            sample_name_strength = get_sample_names_from_sheet(strength_file)
-            sample_name_fatigue = get_sample_names_from_sheet(fatigue_file)
-            sample_name_stiffness = get_sample_names_from_sheet(stiffness_file)
+            if "fatigue" in vak_files:
+                fatigue_file = input_files_folder.joinpath(vak_files.get("fatigue"))
+                sample_name_fatigue = get_sample_names_from_sheet(fatigue_file)
+            else:
+                fatigue_name_fatigue = []
+
+            if "stiffness" in vak_files:
+                stiffness_file = input_files_folder.joinpath(vak_files.get("stiffness"))
+                sample_name_stiffness = get_sample_names_from_sheet(stiffness_file)
+            else:
+                sample_name_stiffness = []
 
 
             def make_mapping(strength_list, fatigue_list, stiffness_list):
