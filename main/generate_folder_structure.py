@@ -444,7 +444,7 @@ if __name__ == "__main__":
     input_general_data_table['Projectnummer'] = input_general_data_table['Projectnummer'].astype(str)
     projects_ids = input_general_data_table['Projectnummer'].dropna().unique().tolist()
     projects_ids.reverse()
-    projects_ids = ['1600982'] # TODO : process only the projects in input_files_folder
+    projects_ids = ['1700160'] # TODO : process only the projects in input_files_folder
 
     fill_project_data_csv(base_folder, projects_ids)
 
@@ -484,7 +484,7 @@ if __name__ == "__main__":
                 fatigue_file = input_files_folder.joinpath(vak_files.get("fatigue"))
                 sample_name_fatigue = get_sample_names_from_sheet(fatigue_file)
             else:
-                fatigue_name_fatigue = []
+                sample_name_fatigue = []
 
             if "stiffness" in vak_files:
                 stiffness_file = input_files_folder.joinpath(vak_files.get("stiffness"))
