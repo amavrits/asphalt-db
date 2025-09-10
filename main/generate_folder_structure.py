@@ -484,7 +484,7 @@ if __name__ == "__main__":
                 fatigue_file = input_files_folder.joinpath(vak_files.get("fatigue"))
                 sample_name_fatigue = get_sample_names_from_sheet(fatigue_file)
             else:
-                fatigue_name_fatigue = []
+                sample_name_fatigue = []
 
             if "stiffness" in vak_files:
                 stiffness_file = input_files_folder.joinpath(vak_files.get("stiffness"))
