@@ -372,7 +372,7 @@ def process_borehole(project_id, bh_data: pd.DataFrame, borehole_id, base_folder
 
     strength_sample, fatigue_sample, stiffness_sample = None, None, None  # will be modified to actual names if files exist
     sample_data = {}
-    if strength_file:
+    if strength_file and sample_names_mapping_dict[borehole_id]["strength"]:
         strength_sample = sample_names_mapping_dict[borehole_id]["strength"][0]
         fill_strength_data_csv(borehole_path, strength_sample, strength_file)
 
@@ -392,7 +392,7 @@ def process_borehole(project_id, bh_data: pd.DataFrame, borehole_id, base_folder
         test_path = borehole_path / f"strength"
         test_path.mkdir(exist_ok=True, parents=True)
 
-    if fatigue_file:
+    if fatigue_file and sample_names_mapping_dict[borehole_id]["fatigue"]:
         fatigue_sample = sample_names_mapping_dict[borehole_id]["fatigue"][0]
         fill_fatigue_data_csv(borehole_path, fatigue_sample, fatigue_file)
         sample_data[fatigue_sample] =  {
@@ -405,7 +405,7 @@ def process_borehole(project_id, bh_data: pd.DataFrame, borehole_id, base_folder
         test_path = borehole_path / f"fatigue"
         test_path.mkdir(exist_ok=True, parents=True)
 
-    if stiffness_file:
+    if stiffness_file and sample_names_mapping_dict[borehole_id]["stiffness"]:
         stiffness_sample = sample_names_mapping_dict[borehole_id]["stiffness"][0]
         fill_stiffness_data_csv(borehole_path, stiffness_sample, stiffness_file)
         sample_data[stiffness_sample]= {
@@ -429,10 +429,10 @@ if __name__ == "__main__":
     SCRIPT_DIR = Path(__file__).parent
 
     # Input path to modify
-    base_folder = Path(r'C:\Users\marloes.slokker\Infram BV\Infram Projecten - 23i740_KC WAB 2024\Uitvoering\output_script_levensduurmodel') # Path to store the formatted data structure
+    base_folder = SCRIPT_DIR.parent.joinpath("data", "automated_data_5")# Path to store the formatted data structure
     input_files_folder = Path(
-        r'C:\Users\marloes.slokker\Infram BV\Infram Projecten - 23i740_KC WAB 2024\Uitvoering\levensduurmodel WAB\all_projectnumbers_files')  # make the path a env variable
-    input_general_data_file = Path(r"C:\Users\marloes.slokker\Infram BV\Infram Projecten - 23i740_KC WAB 2024\Uitvoering\levensduurmodel WAB\Database Asfalt Excel.xlsx")
+        r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data5')  # make the path a env variable
+    input_general_data_file = Path(r"c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data2\Database Asfalt Excel.xlsx")
 
 
     ## START
@@ -444,7 +444,7 @@ if __name__ == "__main__":
     input_general_data_table['Projectnummer'] = input_general_data_table['Projectnummer'].astype(str)
     projects_ids = input_general_data_table['Projectnummer'].dropna().unique().tolist()
     projects_ids.reverse()
-    projects_ids = ['1700160'] # TODO : process only the projects in input_files_folder
+    projects_ids = ['0803318'] # TODO : process only the projects in input_files_folder
 
     fill_project_data_csv(base_folder, projects_ids)
 
