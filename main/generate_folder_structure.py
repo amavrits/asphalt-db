@@ -444,7 +444,7 @@ if __name__ == "__main__":
     input_general_data_table['Projectnummer'] = input_general_data_table['Projectnummer'].astype(str)
     projects_ids = input_general_data_table['Projectnummer'].dropna().unique().tolist()
     projects_ids.reverse()
-    projects_ids = ['1700160'] # TODO : process only the projects in input_files_folder
+    projects_ids = ['0702493', '0901858', '1000038', '1000377', '1300348', '1600982', '1604257', '1901142', '1903808', '2000204', '2003106', '2100513', '2202064'] # TODO : process only the projects in input_files_folder
 
     fill_project_data_csv(base_folder, projects_ids)
 
