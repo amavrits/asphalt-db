@@ -1,4 +1,6 @@
 # Tidy and DRY implementation of database build functions
+import sqlite3
+from pathlib import Path
 
 import psycopg
 import pandas as pd
@@ -7,6 +9,15 @@ from peewee import PostgresqlDatabase
 
 from src.db_builder.models import *
 
+def create_db_sqlite(config):
+    db_path = Path(config["path"])
+    if not db_path.exists():
+        conn = sqlite3.connect(db_path)
+        conn.close()
+
+def connect_sqlite(config):
+    conn = sqlite3.connect(config["path"])
+    return conn
 
 def create_db(db_config):
     db_name = db_config["database"]
