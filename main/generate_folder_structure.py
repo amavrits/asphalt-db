@@ -175,8 +175,6 @@ def fill_strength_data_csv(borehole_path: Path, sample_name: str, file_path: Pat
 
     df_summarized = pd.DataFrame({
         'sample_name': sample_name,
-        'HR': 0,  # TODO ??
-
         'v': v,
         'sig_b': strength,  # TODO: find a better name
         'eps_b': rek_max,
@@ -441,7 +439,7 @@ if __name__ == "__main__":
 
     # Input path to modify
     # base_folder = SCRIPT_DIR.parent.joinpath("data", "DATA_0900262")# Path to store the formatted data structure
-    base_folder = SCRIPT_DIR.parent.joinpath("data", "DATA_INFRAM_ALL_v2")# Path to store the formatted data structure
+    base_folder = SCRIPT_DIR.parent.joinpath("data", "DATA_INFRAM_ALL_v3")# Path to store the formatted data structure
     input_files_folder = Path(
         r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data_all_Infram')  # make the path a env variable
         # r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\0900262')  # make the path a env variable
