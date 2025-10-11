@@ -175,8 +175,6 @@ def fill_strength_data_csv(borehole_path: Path, sample_name: str, file_path: Pat
 
     df_summarized = pd.DataFrame({
         'sample_name': sample_name,
-        'HR': 0,  # TODO ??
-
         'v': v,
         'sig_b': strength,  # TODO: find a better name
         'eps_b': rek_max,
@@ -240,15 +238,18 @@ def fill_fatigue_data_csv(borehole_path, sample_name: str, file_path: Path):
     df_processed.to_csv(test_path / f"processed_data.csv", index=False)
 
     # 3. Get summarized data csv
+
     pha_ini, pha_50, sig_cyc, sig_perm, E_ini, E_50, N_fat = read_summary_fatigue(file_path, sample_name)
+    if pd.isna(pha_ini):
+        print(f"pha_ini: {pha_ini}, E_ini: {E_ini} for sample {sample_name} COULD NOT BE CALCULATED PLEASE CHECK")
 
     df_summarized = pd.DataFrame({
         'sample_name': sample_name,
-        'pha_ini': pha_ini,
+        'pha_ini': pha_ini if not pd.isna(pha_ini) else 9999999,
         'pha_50': pha_50,
         'sig_cyc': sig_cyc,
         'sig_perm': sig_perm,
-        'E_ini': E_ini,
+        'E_ini': E_ini if not pd.isna(E_ini) else 9999999,
         'E_50': E_50,
         'N_fat': N_fat
     }, index=[0])
@@ -334,11 +335,17 @@ def load_samples(file_path: Path) -> list[str]:
 
 def assign_files_to_vak(vak_dict_mapping, project_master_table: pd.DataFrame, filename, input_files_folder):
     """Assign strength/fatigue/stiffness files to each vak based on filename keywords."""
-    vak_list = project_master_table['Dijknaam'].dropna().unique().tolist()
+
+    # replace nan in dataframe for Kilometrering dijkvak
+    project_master_table['Kilometrering dijkvak'] = project_master_table['Kilometrering dijkvak'].replace(np.nan, '', regex=True)
+
+    project_master_table['dijkvak_naam'] = project_master_table['Dijknaam'].str.lower().str.replace(" ", "_") + "_" + project_master_table['Kilometrering dijkvak'].str.lower()
+    vak_list = project_master_table['dijkvak_naam'].dropna().unique().tolist()
+
 
     for vak in vak_list:
         vak_dict_mapping.setdefault(vak, {})
-        vak_data = project_master_table.loc[project_master_table['Dijknaam'] == vak, 'boorkern_id']
+        vak_data = project_master_table.loc[project_master_table['dijkvak_naam'] == vak, 'boorkern_id']
         vak_dict_mapping[vak]["BH_ids"] = [int(bh_id) for bh_id in vak_data.dropna().unique().tolist()]
 
         for keyword, attr in KEYWORD_MAP.items():
@@ -364,11 +371,13 @@ def process_borehole(project_id, bh_data: pd.DataFrame, borehole_id, base_folder
     fatigue_file = input_files_folder / vak_files.get("fatigue") if "fatigue" in vak_files else None
     stiffness_file = input_files_folder / vak_files.get("stiffness") if "stiffness" in vak_files else None
 
-    if len(sample_names_mapping_dict[borehole_id]["fatigue"]) > 1:
-        raise ValueError(
-            f"Sample {sample_names_mapping_dict[borehole_id]['fatigue']} has multiple fatigue samples "
-            f"(project {project_id}). Please fix the file so only one sample per borehole exists."
-        )
+
+    if borehole_id in sample_names_mapping_dict:
+        if len(sample_names_mapping_dict[borehole_id]["fatigue"]) > 1:
+            raise ValueError(
+                f"Sample {sample_names_mapping_dict[borehole_id]['fatigue']} has multiple fatigue samples "
+                f"(project {project_id}). Please fix the file so only one sample per borehole exists."
+            )
 
     strength_sample, fatigue_sample, stiffness_sample = None, None, None  # will be modified to actual names if files exist
     sample_data = {}
@@ -429,10 +438,12 @@ if __name__ == "__main__":
     SCRIPT_DIR = Path(__file__).parent
 
     # Input path to modify
-    base_folder = SCRIPT_DIR.parent.joinpath("data", "automated_data_5")# Path to store the formatted data structure
+    # base_folder = SCRIPT_DIR.parent.joinpath("data", "DATA_0900262")# Path to store the formatted data structure
+    base_folder = SCRIPT_DIR.parent.joinpath("data", "DATA_1400863")# Path to store the formatted data structure
     input_files_folder = Path(
-        r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data5')  # make the path a env variable
-    input_general_data_file = Path(r"c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data2\Database Asfalt Excel.xlsx")
+        r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data_all_Infram')  # make the path a env variable
+        # r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\0900262')  # make the path a env variable
+    input_general_data_file = Path(r"c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data_all_Infram\Database Asfalt Excel.xlsx")
 
 
     ## START
@@ -444,7 +455,11 @@ if __name__ == "__main__":
     input_general_data_table['Projectnummer'] = input_general_data_table['Projectnummer'].astype(str)
     projects_ids = input_general_data_table['Projectnummer'].dropna().unique().tolist()
     projects_ids.reverse()
-    projects_ids = ['0803318'] # TODO : process only the projects in input_files_folder
+    projects_ids = ['1400863'] # TODO : process only the projects in input_files_folder
+    # projects_ids = ['0601831', '0702493', '0802158', '0803318', '0900262', '0901480', '0901602', '0901858', '0902633',
+    #                 '1000038', '1000377', '1103367', '1300348', '1300348', '1400863', '1600982', '1604257', '1700160', '1702837',
+    #                 '1702899', '1900384', '1901142', '1903808', '1903877', '2000204', '2001233', '2001997', '2003106',
+    #                 '2004437', '2100120', '2100513', '2200207', '2202064', '2202263', '2300963', '2301408'] # TODO : process only the projects in input_files_folder
 
     fill_project_data_csv(base_folder, projects_ids)
 
@@ -454,14 +469,12 @@ if __name__ == "__main__":
     general_table_data = []
     dike_table_data = []
     for project_id in projects_ids:
+        print(project_id)
         project_dict[f"P_{project_id}"] = {}
 
         # Group all the files by vak
         vak_dict_mapping = {}
         project_master_table = input_general_data_table[input_general_data_table['Projectnummer'] == project_id]
-
-        vak_list = project_master_table['Dijknaam'].dropna().unique().tolist()
-
 
         for file in input_files_folder.glob("*.xlsm"):
             if project_id not in file.stem:
@@ -525,12 +538,15 @@ if __name__ == "__main__":
             # borehole_ids = list(sample_names_mapping_dict.keys())
             borehole_ids = vak_files["BH_ids"]
             borehole_ids.sort()
-            vak_data = project_master_table.loc[project_master_table['Dijknaam'] == vak_name]
+            vak_data = project_master_table.loc[project_master_table['dijkvak_naam'] == vak_name]
+
 
             fill_master_table_data(project_id, vak_name, borehole_ids, master_table_data, vak_data)
             # There can be one borehole without strength because the test was bad or something.
 
             for borehole_id in borehole_ids:
+                if borehole_id == 24:
+                    a=1
                 bh_data = vak_data.loc[vak_data['boorkern_id'] == borehole_id]
 
                 process_borehole(project_id, bh_data, borehole_id, base_folder, sample_names_mapping_dict, vak_files)

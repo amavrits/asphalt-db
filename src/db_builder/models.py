@@ -55,7 +55,6 @@ class Test(BaseModel):
 
 class GeneralData(BaseModel):
     sample = ForeignKeyField(Sample, backref='gen_samples', null=True)
-
     # Additional test fields
     HR = FloatField(null=True)        # void
     bitumen = FloatField(null=True)  # Bitumen content
@@ -85,8 +84,6 @@ class BezwijksterkteProcessed(BaseModel):
 class BezwijksterkteSummary(BaseModel):
     test = ForeignKeyField(Test, backref='strength_samples_summary', null=True)
     sample_name = CharField()
-
-    HR = FloatField()
     v = FloatField()
     Sec_10 = FloatField()
     Sec_50 = FloatField()
