@@ -9,7 +9,7 @@ from src.db_builder.utils import parse_base_data
 
 if __name__ == "__main__":
     SCRIPT_DIR = Path(__file__).parent
-    data_path = SCRIPT_DIR.parent.joinpath("data", "DATA_INFRAM_ALL_v3")
+    data_path = SCRIPT_DIR.parent.joinpath("data", "DATA_INFRAM_ALL_v4")
 
     dike_table, project_table, master_table, general_data = parse_base_data(data_path)
 

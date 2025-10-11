@@ -439,7 +439,7 @@ if __name__ == "__main__":
 
     # Input path to modify
     # base_folder = SCRIPT_DIR.parent.joinpath("data", "DATA_0900262")# Path to store the formatted data structure
-    base_folder = SCRIPT_DIR.parent.joinpath("data", "DATA_INFRAM_ALL_v3")# Path to store the formatted data structure
+    base_folder = SCRIPT_DIR.parent.joinpath("data", "DATA_1400863")# Path to store the formatted data structure
     input_files_folder = Path(
         r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data_all_Infram')  # make the path a env variable
         # r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\0900262')  # make the path a env variable
@@ -455,11 +455,11 @@ if __name__ == "__main__":
     input_general_data_table['Projectnummer'] = input_general_data_table['Projectnummer'].astype(str)
     projects_ids = input_general_data_table['Projectnummer'].dropna().unique().tolist()
     projects_ids.reverse()
-    # projects_ids = ['0900262'] # TODO : process only the projects in input_files_folder
-    projects_ids = ['0601831', '0702493', '0802158', '0803318', '0900262', '0901480', '0901602', '0901858', '0902633',
-                    '1000038', '1000377', '1103367', '1300348', '1300348', '1600982', '1604257', '1700160', '1702837',
-                    '1702899', '1900384', '1901142', '1903808', '1903877', '2000204', '2001233', '2001997', '2003106',
-                    '2004437', '2100120', '2100513', '2200207', '2202064', '2202263', '2300963', '2301408'] # TODO : process only the projects in input_files_folder
+    projects_ids = ['1400863'] # TODO : process only the projects in input_files_folder
+    # projects_ids = ['0601831', '0702493', '0802158', '0803318', '0900262', '0901480', '0901602', '0901858', '0902633',
+    #                 '1000038', '1000377', '1103367', '1300348', '1300348', '1400863', '1600982', '1604257', '1700160', '1702837',
+    #                 '1702899', '1900384', '1901142', '1903808', '1903877', '2000204', '2001233', '2001997', '2003106',
+    #                 '2004437', '2100120', '2100513', '2200207', '2202064', '2202263', '2300963', '2301408'] # TODO : process only the projects in input_files_folder
 
     fill_project_data_csv(base_folder, projects_ids)
 
