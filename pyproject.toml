@@ -19,6 +19,8 @@ dependencies = [
     "psycopg (>=3.2.9,<4.0.0)",
 
     # openpyxl
+
+    "scikit-learn (>=1.7.2,<2.0.0)"
 ]
 
 
