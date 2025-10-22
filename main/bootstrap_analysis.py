@@ -236,8 +236,6 @@ def main(dike_id: str = "emmapolder", n_bootstrap: int = 10_000) -> None:
     with open(result_path/"bootstrap_results.json", "w") as f:
         json.dump(age_bootstrap_res, f, indent=4)
 
-    pass
-
 
 if __name__ == "__main__":
 
