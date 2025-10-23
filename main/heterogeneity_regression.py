@@ -41,10 +41,24 @@ def set_heterogeneity(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def save_results(res: Dict[str, Any], path) -> None:
+
+    res_lists = {}
+    for (key_1, val_1) in res.items():
+        if isinstance(val_1, dict):
+            val_1 = {key_2: val_2.tolist() if isinstance(val_2, np.ndarray) else val_2 for (key_2, val_2) in val_1.items()}
+        else:
+            val_1 = val_1.tolist() if isinstance(val_1, np.ndarray) else val_1
+        res_lists[key_1] = val_1
+
+    with open(path, "w") as f:
+        json.dump(res_lists, f, indent=4)
+
+
 def fit_linear_regression(df: pd.DataFrame, heterogeneity_category: str = "all") -> Dict[str, Any]:
 
     if heterogeneity_category != "all":
-        df_training = df.loc[df["heterogeneity_category"] == heterogeneity_category].copy()
+        df_training = df.loc[df["heterogeneity_category"] == heterogeneity_category].reset_index(drop=True)
     else:
         df_training = df.copy()
 
@@ -60,8 +74,8 @@ def fit_linear_regression(df: pd.DataFrame, heterogeneity_category: str = "all")
     results = {
         "heterogeneity_category": heterogeneity_category,
         "beta": model.params.values,
-        "ste": np.sqrt(model.scale),
-        "beta_std": model.bse.values,
+        "se": np.sqrt(model.scale),
+        "beta_ste": model.bse.values,
         "beta_cov": model.cov_HC0,
         "t_values": model.tvalues.values,
         "p_values": model.pvalues.values,
@@ -82,17 +96,19 @@ def fit_linear_regression(df: pd.DataFrame, heterogeneity_category: str = "all")
 
     return results
 
-def save_results(res: Dict[str, Any], path) -> None:
 
-    for (key_1, val_1) in res.items():
-        if isinstance(val_1, dict):
-            val_1 = {key_2: val_2.tolist() if isinstance(val_2, np.ndarray) else val_2 for (key_2, val_2) in val_1.items()}
-        else:
-            val_1 = val_1.tolist() if isinstance(val_1, np.ndarray) else val_1
-        res[key_1] = val_1
+def fit_adjusted_linear_regression(df: pd.DataFrame, lr_results: Dict[str, Any]) -> Dict[str, Any]:
 
-    with open(path, "w") as f:
-        json.dump(res, f, indent=4)
+    df_heterogenous = df.loc[df["heterogeneity_category"] == "Heterogeen"].reset_index(drop=True)
+
+    beta_homogenous = lr_results["beta"]
+    beta_ste_homogenous = lr_results["beta_ste"]
+
+    df_heterogenous["target"] -= beta_homogenous[0] + beta_homogenous[1] * df_heterogenous["age"]
+
+    res = fit_linear_regression(df_heterogenous, heterogeneity_category="Heterogeen")
+
+    return res
 
 
 def main(log_y: bool = True) -> None:
@@ -105,7 +121,6 @@ def main(log_y: bool = True) -> None:
     df = pd.read_csv(data_path)
 
     df = set_heterogeneity(df)
-
     df = df.loc[df["heterogeneity_category"].isin(["Homogeen", "Heterogeen"])]
 
     if log_y:
@@ -113,13 +128,14 @@ def main(log_y: bool = True) -> None:
     else:
         df["target"] = df["sig_b"]
 
-    lr_results = {category: fit_linear_regression(df, heterogeneity_category=category) for category in pd.unique(df["heterogeneity_category"])}
+    lr_results = {
+        category: fit_linear_regression(df, heterogeneity_category=category)
+        for category in pd.unique(df["heterogeneity_category"])
+    }
+
+    lr_results["Heterogeen_adjusted"] = fit_adjusted_linear_regression(df, lr_results["Homogeen"])
+
     save_results(lr_results, result_path/"lr_results.json")
-
-
-
-
-    pass
 
 
 if __name__ == "__main__":
