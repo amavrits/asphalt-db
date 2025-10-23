@@ -21,7 +21,8 @@ def get_section_based_statistics(df_final: pd.DataFrame, dikes_and_projects: pd.
         'E_ini': ['mean', 'std'],
         'E_50': ['mean', 'std'],
         'N_fat': ['mean', 'std'],
-        'HR': ['mean', 'std', 'max', 'min']
+        'HR': ['mean', 'std', 'max', 'min'],
+        'number_of_boreholes': 'count'
     })
 
     #flatten multiindex columns

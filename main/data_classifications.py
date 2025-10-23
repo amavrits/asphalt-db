@@ -26,3 +26,22 @@ def categorize_annum(year):
         return '1973-2000'
     else:
         return 'after 2000'
+    
+
+#add column of HR-categories
+def categorize_hr(hr):
+    if hr < 4:
+        return 'HR <4%'
+    elif 4 <= hr < 9:
+        return 'HR 4-9%'
+    else:
+        return 'HR >9%'
+    
+#In data_per_dike_project, make a new column called heterogeneity category based on sig_b_cov
+def categorize_heterogeneity(cov):
+    if cov < 0.2:
+        return 'Homogeen'
+    elif 0.2 <= cov < 0.35:
+        return 'Matig heterogeen'
+    elif cov >= 0.35:
+        return 'Heterogeen'
