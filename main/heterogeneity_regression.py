@@ -41,9 +41,9 @@ def set_heterogeneity(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def fit_linear_regression(df: pd.DataFrame, heterogeneity_category: Optional[str] = None) -> Dict[str, Any]:
+def fit_linear_regression(df: pd.DataFrame, heterogeneity_category: str = "all") -> Dict[str, Any]:
 
-    if heterogeneity_category is not None:
+    if heterogeneity_category != "all":
         df_training = df.loc[df["heterogeneity_category"] == heterogeneity_category].copy()
     else:
         df_training = df.copy()
@@ -58,6 +58,7 @@ def fit_linear_regression(df: pd.DataFrame, heterogeneity_category: Optional[str
     fitted_values_all = model.predict(sm.add_constant(df["age"])).values
 
     results = {
+        "heterogeneity_category": heterogeneity_category,
         "beta": model.params.values,
         "ste": np.sqrt(model.scale),
         "beta_std": model.bse.values,
@@ -66,6 +67,10 @@ def fit_linear_regression(df: pd.DataFrame, heterogeneity_category: Optional[str
         "p_values": model.pvalues.values,
         "conf_int": model.conf_int().values,
         "r_2": model.rsquared,
+        "X_training": df_training["age"].values,
+        "X_all": df["age"].values,
+        "target_training": df_training["target"].values,
+        "target_all": df["target"].values,
         "fitted_values_training": model.fittedvalues.values,
         "resid_training": model.resid.values,
         "fitted_values_all": fitted_values_all,
@@ -77,12 +82,24 @@ def fit_linear_regression(df: pd.DataFrame, heterogeneity_category: Optional[str
 
     return results
 
+def save_results(res: Dict[str, Any], path) -> None:
+
+    for (key_1, val_1) in res.items():
+        if isinstance(val_1, dict):
+            val_1 = {key_2: val_2.tolist() if isinstance(val_2, np.ndarray) else val_2 for (key_2, val_2) in val_1.items()}
+        else:
+            val_1 = val_1.tolist() if isinstance(val_1, np.ndarray) else val_1
+        res[key_1] = val_1
+
+    with open(path, "w") as f:
+        json.dump(res, f, indent=4)
+
 
 def main(log_y: bool = True) -> None:
 
     script_path = Path(__file__).parent
     data_path = script_path.parent / "data/db_querry.csv"
-    result_path = script_path.parent / f"results/heterogeneity_regression"
+    result_path = script_path.parent / f"results/heterogeneity_regression/log_y_{log_y}"
     result_path.mkdir(parents=True, exist_ok=True)
 
     df = pd.read_csv(data_path)
@@ -96,7 +113,11 @@ def main(log_y: bool = True) -> None:
     else:
         df["target"] = df["sig_b"]
 
-    homogenous_lr_results = fit_linear_regression(df, heterogeneity_category="Homogeen")
+    lr_results = {category: fit_linear_regression(df, heterogeneity_category=category) for category in pd.unique(df["heterogeneity_category"])}
+    save_results(lr_results, result_path/"lr_results.json")
+
+
+
 
     pass
 
