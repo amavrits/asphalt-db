@@ -118,8 +118,15 @@ def load_and_merge_data(db_path: Path) -> pd.DataFrame:
     #join df_vs to df_merge_1 on borehole_id
     df_full = pd.merge(df_merge_2, df_vs, on='borehole_id', how='left', suffixes=('_bzs', '_vs'))
 
+    # add number_of_boreholes column
+    number_of_boreholes = df_full.value_counts('project_dike_id')
+    df_full['number_of_boreholes'] = df_full['project_dike_id'].map(number_of_boreholes)
+
+    #remove rows where v < 0.3 because these tests are not valid
+    # df_final = df_full[df_full['v'] >= 0.3]
     conn.close()
     return df_full
+
 
 if __name__ == "__main__":
 
