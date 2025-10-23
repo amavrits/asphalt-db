@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from scipy import stats
@@ -111,6 +112,73 @@ def fit_adjusted_linear_regression(df: pd.DataFrame, lr_results: Dict[str, Any])
     return res
 
 
+def plot_lr_fit(lr_results: Dict[str, Dict[str, Any]], path: Path, key: str, log_y: bool = True) -> None:
+
+    data = lr_results[key]
+    X_training = data["X_training"]
+    y_training = data["target_training"]
+
+    X_all = data["X_all"]
+    idx_sort = np.argsort(X_all)
+    X_all = X_all[idx_sort]
+    y_all = data["target_all"][idx_sort]
+    y_hat = data["fitted_values_all"][idx_sort]
+    se = data["se"]
+
+    if log_y:
+
+        fig, axs = plt.subplots(1, 2, sharex=True, figsize=(12, 6))
+
+        ax = axs[0]
+        ax.scatter(X_all, y_all, c="b", alpha=0.4, label="Entire dataset")
+        ax.scatter(X_training, y_training, c="r", alpha=0.4, label=f"Training ({key.lower()}) dataset")
+        ax.plot(X_all, y_hat, c="r", label="Regression fit")
+        ax.set_xlabel("Age [yr]", fontsize=14)
+        ax.set_ylabel("$ln({σ}_{b})$ [ln(kPa)]", fontsize=14)
+        ax.legend(fontsize=12)
+        ax.grid()
+        ax.set_title("Age-$ln({σ}_{b})$ regression")
+
+        ax = axs[1]
+        ax.scatter(X_all, np.exp(y_all), c="b", alpha=0.4, label="Entire dataset")
+        ax.scatter(X_training, np.exp(y_training), c="r", alpha=0.4, label=f"Training ({key.lower()}) dataset")
+        ax.plot(X_all, np.exp(y_hat+0.5*se**2), c="r", label="Regression fit")
+        ax.set_xlabel("Age [yr]", fontsize=14)
+        ax.set_ylabel("${σ}_{b}$ [kPa]", fontsize=14)
+        ax.legend(fontsize=12)
+        ax.grid()
+        ax.set_title("Age-${σ}_{b}$ transformation")
+
+    else:
+
+        fig = plt.figure()
+        plt.scatter(X_all, y_all, c="b", alpha=0.4, label="Entire dataset")
+        plt.scatter(X_training, y_training, c="r", alpha=0.4, label=f"Training ({key.lower()}) dataset")
+        plt.plot(X_all, y_hat, c="r", label="Regression fit")
+        plt.xlabel("Age [yr]", fontsize=14)
+        plt.ylabel("${σ}_{b}$ [kPa]", fontsize=14)
+        plt.legend(fontsize=12)
+        plt.grid()
+
+    plt.close()
+    fig.savefig(path/f"linear_regression_{key.lower()}.png")
+
+    pass
+
+
+def plot_fits(lr_results: Dict[str, Dict[str, Any]], path: Path, log_y: bool = True) -> None:
+
+    path = path / "plots"
+    path.mkdir(parents=True, exist_ok=True)
+
+    plot_lr_fit(lr_results, path, key="Homogeen", log_y=log_y)
+
+    pass
+
+
+
+
+
 def main(log_y: bool = True) -> None:
 
     script_path = Path(__file__).parent
@@ -136,6 +204,8 @@ def main(log_y: bool = True) -> None:
     lr_results["Heterogeen_adjusted"] = fit_adjusted_linear_regression(df, lr_results["Homogeen"])
 
     save_results(lr_results, result_path/"lr_results.json")
+
+    plot_fits(lr_results, result_path, log_y=log_y)
 
 
 if __name__ == "__main__":
