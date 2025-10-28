@@ -47,7 +47,7 @@ print(f'De resultaten van de driepuntsbuigproeven van **{grafiektitel}** zijn de
 
 
 #HOOFDSCRIPT - TABEL EN FIGUUR
-nb = len(list)
+# nb = len(list)
 
 nb_cols = 4
 nb_rows= 2
