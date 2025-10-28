@@ -45,3 +45,20 @@ def categorize_heterogeneity(cov):
         return 'Matig heterogeen'
     elif cov >= 0.35:
         return 'Heterogeen'
+    
+
+def classifications_wrapper(df_final: pd.DataFrame, data_per_dike_project: pd.DataFrame) -> (pd.DataFrame, pd.DataFrame):
+    df_final['HR_category'] = df_final['HR'].apply(categorize_hr)    
+    df_final['brittleness'] = df_final.apply(classify_brittleness, axis=1)
+    df_final['material_class'] = df_final.apply(classify_material_strength, axis=1)
+    df_final['construction_year_category'] = df_final.construction_year.apply(categorize_annum)
+
+    data_per_dike_project['heterogeneity_category'] = data_per_dike_project['sig_b_cov'].apply(categorize_heterogeneity)
+    
+    #heterogeniteitscategorie: maak een dict van project_dike_id en de corresponderende heterogeniteitscategorie o.b.v. data_per_dike_project
+    heterogeneity_dict = data_per_dike_project.set_index('project_dike_id')['heterogeneity_category'].to_dict()
+    heterogeneity_dict
+    #toevoegen aan df_final
+    
+    df_final['heterogeneity_category'] = df_final['project_dike_id'].map(heterogeneity_dict)
+    return df_final, data_per_dike_project
