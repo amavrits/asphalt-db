@@ -22,6 +22,7 @@ def get_section_based_statistics(df_final: pd.DataFrame, dikes_and_projects: pd.
         'E_50': ['mean', 'std'],
         'N_fat': ['mean', 'std'],
         'HR': ['mean', 'std', 'max', 'min'],
+        'bitumen': ['mean', 'std'],
         'number_of_boreholes': 'count'
     })
 

@@ -54,6 +54,7 @@ def classifications_wrapper(df_final: pd.DataFrame, data_per_dike_project: pd.Da
     df_final['construction_year_category'] = df_final.construction_year.apply(categorize_annum)
 
     data_per_dike_project['heterogeneity_category'] = data_per_dike_project['sig_b_cov'].apply(categorize_heterogeneity)
+    data_per_dike_project['construction_year_category'] = data_per_dike_project.construction_year.apply(categorize_annum)
     
     #heterogeniteitscategorie: maak een dict van project_dike_id en de corresponderende heterogeniteitscategorie o.b.v. data_per_dike_project
     heterogeneity_dict = data_per_dike_project.set_index('project_dike_id')['heterogeneity_category'].to_dict()
