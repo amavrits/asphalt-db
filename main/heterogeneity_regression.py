@@ -37,12 +37,12 @@ def set_heterogeneity(df: pd.DataFrame) -> pd.DataFrame:
 
     df['heterogeneity_category'] = df['sig_b_cov'].apply(categorize_heterogeneity)
 
-    df["age"] = df["investigation_year"] - df["construction_year"]
+    df["age_at_investigation"] = df["investigation_year"] - df["construction_year"]
 
     return df
 
 
-def save_results(res: Dict[str, Any], path) -> None:
+def save_results(res: Dict[str, Any], df: pd.DataFrame, path: Path, log_y: bool = True) -> None:
 
     res_lists = {}
     for (key_1, val_1) in res.items():
@@ -55,6 +55,14 @@ def save_results(res: Dict[str, Any], path) -> None:
     with open(path, "w") as f:
         json.dump(res_lists, f, indent=4)
 
+    #add values to df and output as csv for further analysis
+    if log_y:
+        df['log_sig_b_detrended'] = res['Homogeen']['resid_all']
+        df['log_sig_b_regression'] = res['Homogeen']['fitted_values_all']
+    else:
+        df['sig_b_detrended'] = res['Homogeen']['resid_all']
+        df['sig_b_regression'] = res['Homogeen']['fitted_values_all']
+    df.to_csv(path.parent / "data_with_regression_output.csv", index=False)
 
 def fit_linear_regression(df: pd.DataFrame, heterogeneity_category: str = "all") -> Dict[str, Any]:
 
@@ -63,14 +71,14 @@ def fit_linear_regression(df: pd.DataFrame, heterogeneity_category: str = "all")
     else:
         df_training = df.copy()
 
-    X = df_training["age"]
+    X = df_training["age_at_investigation"]
     X = sm.add_constant(X)
     y = df_training["target"]
 
     model = sm.OLS(y, X).fit()
     summary = model.summary()
 
-    fitted_values_all = model.predict(sm.add_constant(df["age"])).values
+    fitted_values_all = model.predict(sm.add_constant(df["age_at_investigation"])).values
 
     results = {
         "heterogeneity_category": heterogeneity_category,
@@ -82,8 +90,8 @@ def fit_linear_regression(df: pd.DataFrame, heterogeneity_category: str = "all")
         "p_values": model.pvalues.values,
         "conf_int": model.conf_int().values,
         "r_2": model.rsquared,
-        "X_training": df_training["age"].values,
-        "X_all": df["age"].values,
+        "X_training": df_training["age_at_investigation"].values,
+        "X_all": df["age_at_investigation"].values,
         "target_training": df_training["target"].values,
         "target_all": df["target"].values,
         "fitted_values_training": model.fittedvalues.values,
@@ -105,7 +113,7 @@ def fit_adjusted_linear_regression(df: pd.DataFrame, lr_results: Dict[str, Any])
     beta_homogenous = lr_results["beta"]
     beta_ste_homogenous = lr_results["beta_ste"]
 
-    df_heterogenous["target"] -= beta_homogenous[0] + beta_homogenous[1] * df_heterogenous["age"]
+    df_heterogenous["target"] -= beta_homogenous[0] + beta_homogenous[1] * df_heterogenous["age_at_investigation"]
 
     res = fit_linear_regression(df_heterogenous, heterogeneity_category="Heterogeen")
 
@@ -182,15 +190,18 @@ def plot_fits(lr_results: Dict[str, Dict[str, Any]], path: Path, log_y: bool = T
 def main(log_y: bool = True) -> None:
 
     script_path = Path(__file__).parent
-    data_path = script_path.parent / "data/db_querry.csv"
+    # data_path = script_path.parent / "data/db_querry.csv"
+    data_path = script_path.parent / "data/database_all_v3.csv"
     result_path = script_path.parent / f"results/heterogeneity_regression/log_y_{log_y}"
     result_path.mkdir(parents=True, exist_ok=True)
 
     df = pd.read_csv(data_path)
 
     df = set_heterogeneity(df)
-    df = df.loc[df["heterogeneity_category"].isin(["Homogeen", "Heterogeen"])]
-
+    # df = df.loc[df['age']>30]
+    df = df.loc[df["heterogeneity_category"].isin(["Homogeen", "Heterogeen", "Matig heterogeen"])].reset_index(drop=True)
+    #drop rows where sig_b is nan
+    df = df.dropna(subset=["sig_b"]).reset_index(drop=True)
     if log_y:
         df["target"] = np.log(df["sig_b"])
     else:
@@ -203,7 +214,7 @@ def main(log_y: bool = True) -> None:
 
     lr_results["Heterogeen_adjusted"] = fit_adjusted_linear_regression(df, lr_results["Homogeen"])
 
-    save_results(lr_results, result_path/"lr_results.json")
+    save_results(lr_results, df, result_path/"lr_results.json",log_y=log_y)
 
     plot_fits(lr_results, result_path, log_y=log_y)
 
@@ -213,8 +224,8 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--log_y", action="store_false")
     args = parser.parse_args()
-
+    log_y = True
     main(
-        log_y=args.log_y
+        log_y= log_y
     )
 
