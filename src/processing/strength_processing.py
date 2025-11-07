@@ -13,6 +13,7 @@ warnings.filterwarnings("ignore")
 from scipy.signal import find_peaks
 from scipy.interpolate import interp1d
 from src.parsing.strength_parsing import read_data, read_parameters
+import matplotlib.pyplot as plt
 
 
 def calc_linear_fit(xmean, ymean, max_index):
@@ -149,7 +150,8 @@ def define_sec_modulus(file_path, sheet, data, D, h):
     
 
 def make_plot(ax, borehole: str, originele_data, xmean, ymean, final_line, gecorrigeerde_data,
-                x_max, y_max, x_interp, y_interp, G):
+                x_max, y_max, x_interp, y_interp, G, save_dir = False):
+    fig, ax = plt.subplots(figsize=(7,5))
     ax.plot(originele_data['Verplaatsing'], originele_data['Kracht'], '.', label='Originele data', color='grey')
     ax.plot(xmean, ymean, linestyle='dashed', linewidth=1, color='grey')
     
@@ -168,9 +170,14 @@ def make_plot(ax, borehole: str, originele_data, xmean, ymean, final_line, gecor
     ax.set_title(f'{borehole} - Gc: {G:.2f} J/m2')
     ax.legend()
     ax.grid(alpha=0.5)
+    if not save_dir == False:
+        plt.savefig(save_dir / f'{borehole}_strength_plot.png', dpi=300)
+        plt.close()
     
     
-def plot_graph(ax, file_path, sheet):
+def plot_graph(ax, file_path, sheet, save_dir = None):
+    if save_dir == None:
+        save_dir = file_path.parent
     originele_data, raw_data = read_data(file_path, sheet)
     D, h, strength, v = read_parameters(file_path, sheet)
     xmean = originele_data['Verplaatsing'].rolling(8).mean()
@@ -184,7 +191,7 @@ def plot_graph(ax, file_path, sheet):
     rek_max, x_max, y_max, x_interp, y_interp, Gc, vormfactor = calc_fracture_data(gecorrigeerde_data, D, h)
 
     make_plot(ax, sheet, originele_data, xmean, ymean, final_line, gecorrigeerde_data,
-                x_max, y_max, x_interp, y_interp, Gc)
+                x_max, y_max, x_interp, y_interp, Gc, save_dir = save_dir)
     
     
 def make_table_summary_data(file_path, grafiektitel):

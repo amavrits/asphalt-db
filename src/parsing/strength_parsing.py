@@ -17,7 +17,11 @@ def read_data(file_path, sheet):
     data['Verplaatsing'] = pd.to_numeric(data['Verplaatsing'], errors='coerce')
     data['Kracht'] = pd.to_numeric(data['Kracht'], errors='coerce')
     data = data.dropna()
-            
+
+    if not ((data['Verplaatsing'] == 0).any() and (data['Kracht'] == 0).any()):
+            extra_punt = pd.DataFrame({'Verplaatsing': [0], 'Kracht': [0]})
+            data = pd.concat([extra_punt, data], ignore_index=True)
+
     raw_data = pd.read_excel(file_path, sheet_name=sheet, skiprows=17)
     raw_data['tijd'] = raw_data.iloc[:, 27]
     raw_data['verplaatsing'] = raw_data.iloc[:, 26]
