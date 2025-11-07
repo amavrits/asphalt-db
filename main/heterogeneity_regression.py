@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from scipy import stats
@@ -8,6 +7,9 @@ import json
 from argparse import ArgumentParser
 from numpy.typing import NDArray
 from typing import List, Tuple, Dict, Optional, Any
+import matplotlib.pyplot as plt
+import seaborn as sns
+# sns.set_style("whitegrid")
 
 
 def categorize_heterogeneity(cov: float) -> str:
@@ -71,14 +73,28 @@ def fit_linear_regression(df: pd.DataFrame, heterogeneity_category: str = "all")
     else:
         df_training = df.copy()
 
-    X = df_training["age_at_investigation"]
+    # X = df_training["age_at_investigation"]
+    X = df_training[["age_at_investigation", "HR"]]
     X = sm.add_constant(X)
     y = df_training["target"]
 
     model = sm.OLS(y, X).fit()
     summary = model.summary()
 
-    fitted_values_all = model.predict(sm.add_constant(df["age_at_investigation"])).values
+    # prediction_training = model.get_prediction(sm.add_constant(df_training["age_at_investigation"]))
+    prediction_training = model.get_prediction(sm.add_constant(df_training[["age_at_investigation", "HR"]]))
+    summary_prediction_training = prediction_training.summary_frame(alpha=0.05)
+    mean_prediction_training = summary_prediction_training["mean"].values
+    ci_prediction_training = summary_prediction_training[["mean_ci_lower", "mean_ci_upper"]].values
+    pi_prediction_training = summary_prediction_training[["obs_ci_lower", "obs_ci_upper"]].values
+
+    # prediction_all = model.get_prediction(sm.add_constant(df["age_at_investigation"]))
+    prediction_all = model.get_prediction(sm.add_constant(df[["age_at_investigation", "HR"]]))
+    summary_prediction_all = prediction_all.summary_frame(alpha=0.05)
+    mean_prediction_all = summary_prediction_all["mean"].values
+    ci_prediction_all = summary_prediction_all[["mean_ci_lower", "mean_ci_upper"]].values
+    pi_prediction_all = summary_prediction_all[["obs_ci_lower", "obs_ci_upper"]].values
+    
 
     results = {
         "heterogeneity_category": heterogeneity_category,
@@ -94,10 +110,14 @@ def fit_linear_regression(df: pd.DataFrame, heterogeneity_category: str = "all")
         "X_all": df["age_at_investigation"].values,
         "target_training": df_training["target"].values,
         "target_all": df["target"].values,
-        "fitted_values_training": model.fittedvalues.values,
+        "fitted_values_training": mean_prediction_training,
+        "ci_prediction_training": ci_prediction_training,
+        "pi_prediction_training": pi_prediction_training,
         "resid_training": model.resid.values,
-        "fitted_values_all": fitted_values_all,
-        "resid_all": df["target"].values - fitted_values_all,
+        "fitted_values_all": mean_prediction_all,
+        "ci_prediction_all": ci_prediction_all,
+        "pi_prediction_all": pi_prediction_all,
+        "resid_all": df["target"].values - mean_prediction_all,
         "n_obs": int(model.nobs),
         "summary": summary.as_text(),
         "summary_dict": model.summary2().tables[1].to_dict(orient='index'),
@@ -131,47 +151,53 @@ def plot_lr_fit(lr_results: Dict[str, Dict[str, Any]], path: Path, key: str, log
     X_all = X_all[idx_sort]
     y_all = data["target_all"][idx_sort]
     y_hat = data["fitted_values_all"][idx_sort]
+    ci = data["ci_prediction_all"][idx_sort]
+    pi = data["pi_prediction_all"][idx_sort]
     se = data["se"]
 
     if log_y:
 
-        fig, axs = plt.subplots(1, 2, sharex=True, figsize=(12, 6))
+        fig, axs = plt.subplots(1, 2, sharex=True, figsize=(16, 6))
 
         ax = axs[0]
-        ax.scatter(X_all, y_all, c="b", alpha=0.4, label="Entire dataset")
+        ax.fill_between(X_all, pi[:, 0], pi[:, 1], color="r", alpha=0.1, label="95% PI")
+        ax.fill_between(X_all, ci[:, 0], ci[:, 1], color="r", alpha=0.3, label="95% CI")
+        ax.scatter(X_all, y_all, c="b", alpha=0.4, label="Volledige dataset")
         ax.scatter(X_training, y_training, c="r", alpha=0.4, label=f"Training ({key.lower()}) dataset")
         ax.plot(X_all, y_hat, c="r", label="Regression fit")
-        ax.set_xlabel("Age [yr]", fontsize=14)
+        ax.set_xlabel("Leeftijd [jaar]", fontsize=14)
         ax.set_ylabel("$ln({σ}_{b})$ [ln(kPa)]", fontsize=14)
-        ax.legend(fontsize=12)
+        ax.legend(fontsize=12, loc="lower left")
         ax.grid()
-        ax.set_title("Age-$ln({σ}_{b})$ regression")
+        ax.set_title("Leeftijd-$ln({σ}_{b})$")
 
         ax = axs[1]
-        ax.scatter(X_all, np.exp(y_all), c="b", alpha=0.4, label="Entire dataset")
+        ax.fill_between(X_all, np.exp(pi[:, 0]), np.exp(pi[:, 1]), color="r", alpha=0.1, label="95% PI")
+        ax.fill_between(X_all, np.exp(ci[:, 0]+0.5*se**2), np.exp(ci[:, 1]+0.5*se**2), color="r", alpha=0.3, label="95% CI")
+        ax.scatter(X_all, np.exp(y_all+0.5*se**2), c="b", alpha=0.4, label="Volledige dataset")
         ax.scatter(X_training, np.exp(y_training), c="r", alpha=0.4, label=f"Training ({key.lower()}) dataset")
         ax.plot(X_all, np.exp(y_hat+0.5*se**2), c="r", label="Regression fit")
-        ax.set_xlabel("Age [yr]", fontsize=14)
+        ax.set_xlabel("Leeftijd [jaar]", fontsize=14)
         ax.set_ylabel("${σ}_{b}$ [kPa]", fontsize=14)
-        ax.legend(fontsize=12)
+        ax.legend(fontsize=12, loc="lower left")
         ax.grid()
-        ax.set_title("Age-${σ}_{b}$ transformation")
+        ax.set_title("Leeftijd-${σ}_{b}$")
 
     else:
 
         fig = plt.figure()
-        plt.scatter(X_all, y_all, c="b", alpha=0.4, label="Entire dataset")
+        plt.fill_between(X_all, pi[:, 0], pi[:, 1], color="r", alpha=0.1, label="95% PI")
+        plt.fill_between(X_all, ci[:, 0], ci[:, 1], color="r", alpha=0.3, label="95% CI")
+        plt.scatter(X_all, y_all, c="b", alpha=0.4, label="Volledige dataset")
         plt.scatter(X_training, y_training, c="r", alpha=0.4, label=f"Training ({key.lower()}) dataset")
         plt.plot(X_all, y_hat, c="r", label="Regression fit")
-        plt.xlabel("Age [yr]", fontsize=14)
+        plt.xlabel("Leeftijd [jaar]", fontsize=14)
         plt.ylabel("${σ}_{b}$ [kPa]", fontsize=14)
-        plt.legend(fontsize=12)
+        plt.legend(fontsize=12, loc="lower left")
         plt.grid()
 
     plt.close()
     fig.savefig(path/f"linear_regression_{key.lower()}.png")
-
-    pass
 
 
 def plot_fits(lr_results: Dict[str, Dict[str, Any]], path: Path, log_y: bool = True) -> None:
@@ -182,9 +208,6 @@ def plot_fits(lr_results: Dict[str, Dict[str, Any]], path: Path, log_y: bool = T
     plot_lr_fit(lr_results, path, key="Homogeen", log_y=log_y)
 
     pass
-
-
-
 
 
 def main(log_y: bool = True) -> None:
@@ -224,8 +247,9 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--log_y", action="store_false")
     args = parser.parse_args()
-    log_y = True
+
     main(
-        log_y= log_y
+        log_y= args.log_y
+        # log_y= False
     )
 
