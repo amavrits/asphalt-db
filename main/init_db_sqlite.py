@@ -9,13 +9,14 @@ from src.db_builder.utils import parse_base_data
 
 if __name__ == "__main__":
     SCRIPT_DIR = Path(__file__).parent
-    data_path = SCRIPT_DIR.parent.joinpath("data", "DATA_INFRAM_ALL_v4")
+    data_path = SCRIPT_DIR.parent.joinpath("data", "DATA_all")
+    # r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data_all_Infram')  # make the path a env variable
 
     dike_table, project_table, master_table, general_data = parse_base_data(data_path)
 
     DB_CONFIG = {
         "engine": "sqlite",
-        "path": str(Path(r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB').joinpath("database_all_v2.sqlite3"))
+        "path": str(Path(r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB').joinpath("database_all_v5 - Copy.sqlite3"))
     }
 
     db = SqliteDatabase(DB_CONFIG["path"])

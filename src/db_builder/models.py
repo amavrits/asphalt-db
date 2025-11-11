@@ -58,6 +58,7 @@ class GeneralData(BaseModel):
     # Additional test fields
     HR = FloatField(null=True)        # void
     bitumen = FloatField(null=True)  # Bitumen content
+    dichtheid = FloatField(null=True)  # Density
 
 class BezwijksterkteRuwe(BaseModel):
     test = ForeignKeyField(Test, backref='strength_samples', null=True)

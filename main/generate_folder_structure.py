@@ -55,7 +55,7 @@ def fill_general_table_data(project_id: int, borehole_id, sample_name_strength: 
                             sample_name_stiffness: str,
                             general_table_data: list, bh_data: pd.DataFrame) -> list:
     """
-    Columns of the general table are: project, borehole, HR, bitumen
+    Columns of the general table are: project, borehole, HR, bitumen, dichtheid
     :param project_id:
     :param borehole_id:
     :param sample_name_strength:
@@ -65,15 +65,16 @@ def fill_general_table_data(project_id: int, borehole_id, sample_name_strength: 
     :return:
     """
 
-    # Fillers for HR and bitumen, these will be filled later with the data from Bernadette
+    # Fillers for HR and bitumen adn dichtheid, these will be filled later with the data from Bernadette
     HR =  bh_data['HR'].iloc[0] if not bh_data.empty else None
     bitumen = bh_data['Bitumengehalte NEN'].iloc[0] if not bh_data.empty else None
+    dichtheid = bh_data['dichtheid proef gemeten'].iloc[0] if not bh_data.empty else None
     if sample_name_strength:
-        general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_strength, HR, bitumen])
+        general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_strength, HR, bitumen, dichtheid])
     if sample_name_fatigue:
-        general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_fatigue, HR, bitumen])
+        general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_fatigue, HR, bitumen, dichtheid])
     if sample_name_stiffness:
-        general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_stiffness, HR, bitumen])
+        general_table_data.append([f"P_{project_id}", f"BH{borehole_id}", sample_name_stiffness, HR, bitumen, dichtheid])
     return general_table_data
 
 
@@ -438,12 +439,12 @@ if __name__ == "__main__":
     SCRIPT_DIR = Path(__file__).parent
 
     # Input path to modify
-    # base_folder = SCRIPT_DIR.parent.joinpath("data", "DATA_0900262")# Path to store the formatted data structure
-    base_folder = SCRIPT_DIR.parent.joinpath("data", "DATA_1400863")# Path to store the formatted data structure
+    base_folder = SCRIPT_DIR.parent.joinpath("data", "DATA_1702899")# Path to store the formatted data structure
+    # base_folder = SCRIPT_DIR.parent.joinpath("data", "DATA_all")# Path to store the formatted data structure
     input_files_folder = Path(
         r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data_all_Infram')  # make the path a env variable
         # r'c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\0900262')  # make the path a env variable
-    input_general_data_file = Path(r"c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data_all_Infram\Database Asfalt Excel.xlsx")
+    input_general_data_file = Path(r"c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\data_all_Infram\Database Asfalt Excel modified.xlsx")
 
 
     ## START
@@ -455,11 +456,14 @@ if __name__ == "__main__":
     input_general_data_table['Projectnummer'] = input_general_data_table['Projectnummer'].astype(str)
     projects_ids = input_general_data_table['Projectnummer'].dropna().unique().tolist()
     projects_ids.reverse()
-    projects_ids = ['1'] # TODO : process only the projects in input_files_folder
+    # projects_ids = ['2401206'] # TODO : process only the projects in input_files_folder
+    projects_ids = ['1702899'] # TODO : process only the projects in input_files_folder
     # projects_ids = ['0601831', '0702493', '0802158', '0803318', '0900262', '0901480', '0901602', '0901858', '0902633',
     #                 '1000038', '1000377', '1103367', '1300348', '1400863', '1600982', '1604257', '1700160', '1702837',
-    #                 '1702899', '1900384', '1901142', '1903808', '1903877', '2000204', '2001233', '2001997', '2003106',
-    #                 '2004437', '2100120', '2100513', '2200207', '2202064', '2202263', '2300963', '2301408'] # TODO : process only the projects in input_files_folder
+
+                    # '1702899',
+                    # '1900384', '1901142', '1903808', '1903877', '2000204', '2001233', '2001997', '2003106',
+                    # '2004437', '2100120', '2100513', '2200207', '2202064', '2202263', '2300963', '2301408'] # TODO : process only the projects in input_files_folder
 
     fill_project_data_csv(base_folder, projects_ids)
 
@@ -554,7 +558,7 @@ if __name__ == "__main__":
     pd.DataFrame(master_table_data, columns=["project", "borehole", "dijk", "aanlegjaar", "onderzoeksjaar"]) \
         .to_csv(base_folder / "master_table.csv", index=False)
 
-    pd.DataFrame(general_table_data, columns=["project", "borehole", "sample", "HR", "bitumen"]) \
+    pd.DataFrame(general_table_data, columns=["project", "borehole", "sample", "HR", "bitumen", "dichtheid"]) \
         .drop_duplicates(subset=["project", "borehole", "sample"]) \
         .to_csv(base_folder / "general_data.csv", index=False)
 
