@@ -146,7 +146,8 @@ def add_sample_general_data(sample_name, borehole_name, project_name, master_tab
     GeneralData.create(
         sample=sample,
         HR=float(row["HR"]),
-        bitumen=float(row["bitumen"]) if row["bitumen"] != "niet bepaald" else None
+        bitumen=float(row["bitumen"]) if row["bitumen"] != "niet bepaald" else None,
+        dichtheid=float(row["dichtheid"])
     )
 
 

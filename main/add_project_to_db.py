@@ -9,8 +9,8 @@ from src.db_builder.build import add_project, iter_dikes, add_borehole, add_samp
 from src.db_builder.utils import parse_base_data
 
 SCRIPT_DIR = Path(__file__).parent
-project_folder = SCRIPT_DIR.parent.joinpath("data", "DATA_1400863")
-project_name = "P_1400863"
+project_folder = SCRIPT_DIR.parent.joinpath("data", "DATA_1702899")
+project_name = "P_1702899"
 
 
 dike_table, project_table, master_table, general_data = parse_base_data(project_folder)
@@ -24,7 +24,7 @@ dike_table, project_table, master_table, general_data = parse_base_data(project_
 
 
 DB_PATH = Path(
-        r"c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\database_all_v3.sqlite3"
+        r"c:\Users\hauth\OneDrive - Stichting Deltares\projects\Asphalte Regression\DB\database_all_v5 - Copy.sqlite3"
     )
 
 # === CONNECT TO EXISTING DATABASE ===
