@@ -131,7 +131,7 @@ def load_and_merge_data(db_path: Path) -> pd.DataFrame:
 if __name__ == "__main__":
 
     script_path = Path(__file__).parent
-    db_path = script_path.parent /"data/database_all_v3.sqlite"
+    db_path = script_path.parent /"data/database_all_v5.sqlite3"
 
     conn = sqlite3.connect(db_path)
 
@@ -160,5 +160,5 @@ if __name__ == "__main__":
     """
 
     df = pd.read_sql(query, conn)
-    df.to_csv(db_path.parent.absolute()/"db_querry.csv", index=False)
+    df.to_csv(db_path.parent.absolute()/"database_all_v5.csv", index=False)
 

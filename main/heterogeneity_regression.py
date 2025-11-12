@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from scipy import stats
 import statsmodels.api as sm
+from sklearn.metrics import r2_score, mean_squared_error
 from pathlib import Path
 import json
 from argparse import ArgumentParser
@@ -66,6 +67,7 @@ def save_results(res: Dict[str, Any], df: pd.DataFrame, path: Path, log_y: bool 
         df['sig_b_regression'] = res['Homogeen']['fitted_values_all']
     df.to_csv(path.parent / "data_with_regression_output.csv", index=False)
 
+
 def fit_linear_regression(df: pd.DataFrame, heterogeneity_category: str = "all") -> Dict[str, Any]:
 
     if heterogeneity_category != "all":
@@ -73,23 +75,20 @@ def fit_linear_regression(df: pd.DataFrame, heterogeneity_category: str = "all")
     else:
         df_training = df.copy()
 
-    # X = df_training["age_at_investigation"]
-    X = df_training[["age_at_investigation", "HR"]]
+    X = df_training["age_at_investigation"]
     X = sm.add_constant(X)
     y = df_training["target"]
 
     model = sm.OLS(y, X).fit()
     summary = model.summary()
 
-    # prediction_training = model.get_prediction(sm.add_constant(df_training["age_at_investigation"]))
-    prediction_training = model.get_prediction(sm.add_constant(df_training[["age_at_investigation", "HR"]]))
+    prediction_training = model.get_prediction(sm.add_constant(df_training["age_at_investigation"]))
     summary_prediction_training = prediction_training.summary_frame(alpha=0.05)
     mean_prediction_training = summary_prediction_training["mean"].values
     ci_prediction_training = summary_prediction_training[["mean_ci_lower", "mean_ci_upper"]].values
     pi_prediction_training = summary_prediction_training[["obs_ci_lower", "obs_ci_upper"]].values
 
-    # prediction_all = model.get_prediction(sm.add_constant(df["age_at_investigation"]))
-    prediction_all = model.get_prediction(sm.add_constant(df[["age_at_investigation", "HR"]]))
+    prediction_all = model.get_prediction(sm.add_constant(df["age_at_investigation"]))
     summary_prediction_all = prediction_all.summary_frame(alpha=0.05)
     mean_prediction_all = summary_prediction_all["mean"].values
     ci_prediction_all = summary_prediction_all[["mean_ci_lower", "mean_ci_upper"]].values
@@ -213,8 +212,8 @@ def plot_fits(lr_results: Dict[str, Dict[str, Any]], path: Path, log_y: bool = T
 def main(log_y: bool = True) -> None:
 
     script_path = Path(__file__).parent
-    # data_path = script_path.parent / "data/db_querry.csv"
     data_path = script_path.parent / "data/database_all_v3.csv"
+    # data_path = script_path.parent / "data/database_all_v5.csv"
     result_path = script_path.parent / f"results/heterogeneity_regression/log_y_{log_y}"
     result_path.mkdir(parents=True, exist_ok=True)
 
@@ -230,16 +229,7 @@ def main(log_y: bool = True) -> None:
     else:
         df["target"] = df["sig_b"]
 
-    lr_results = {
-        category: fit_linear_regression(df, heterogeneity_category=category)
-        for category in pd.unique(df["heterogeneity_category"])
-    }
-
-    lr_results["Heterogeen_adjusted"] = fit_adjusted_linear_regression(df, lr_results["Homogeen"])
-
-    save_results(lr_results, df, result_path/"lr_results.json",log_y=log_y)
-
-    plot_fits(lr_results, result_path, log_y=log_y)
+    lr_results = fit_linear_regression(df, heterogeneity_category="Homogeen")
 
 
 if __name__ == "__main__":
@@ -249,7 +239,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(
-        log_y= args.log_y
-        # log_y= False
+        # log_y= args.log_y
+        log_y= False
     )
 
