@@ -11,27 +11,50 @@ from typing import List, Tuple, Dict, Optional, Any
 import matplotlib.pyplot as plt
 import seaborn as sns
 # sns.set_style("whitegrid")
+import warnings
+from statsmodels.tools.sm_exceptions import ValueWarning
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+warnings.filterwarnings(
+    "ignore",
+    category=ValueWarning,
+    message="omni_normtest is not valid with less than 8 observations"
+)
 
 
-
-def fit_linear_regression_group(df: pd.DataFrame, subset_group: str = "HR_group", group: str = "all") -> Dict[str, Any]:
+def fit_linear_regression_group(
+        df: pd.DataFrame,
+        subset_group: str = "HR_group",
+        group: int = 0,
+        regress_HR: bool = False
+) -> Dict[str, Any]:
 
     df_training = df.loc[df[subset_group] == group].reset_index(drop=True)
 
-    X = df_training["age_at_investigation"]
+    if regress_HR:
+        X = df_training[["age_at_investigation", "HR"]]
+    else:
+        X = df_training["age_at_investigation"]
+
     X = sm.add_constant(X)
     y = df_training["target"]
 
     model = sm.OLS(y, X).fit()
     summary = model.summary()
 
-    prediction_training = model.get_prediction(sm.add_constant(df_training["age_at_investigation"]))
+    if regress_HR:
+        prediction_training = model.get_prediction(sm.add_constant(df_training[["age_at_investigation", "HR"]]))
+    else:
+        prediction_training = model.get_prediction(sm.add_constant(df_training["age_at_investigation"]))
     summary_prediction_training = prediction_training.summary_frame(alpha=0.05)
     mean_prediction_training = summary_prediction_training["mean"].values
     ci_prediction_training = summary_prediction_training[["mean_ci_lower", "mean_ci_upper"]].values
     pi_prediction_training = summary_prediction_training[["obs_ci_lower", "obs_ci_upper"]].values
 
-    prediction_all = model.get_prediction(sm.add_constant(df["age_at_investigation"]))
+    if regress_HR:
+        prediction_all = model.get_prediction(sm.add_constant(df[["age_at_investigation", "HR"]]))
+    else:
+        prediction_all = model.get_prediction(sm.add_constant(df["age_at_investigation"]))
     summary_prediction_all = prediction_all.summary_frame(alpha=0.05)
     mean_prediction_all = summary_prediction_all["mean"].values
     ci_prediction_all = summary_prediction_all[["mean_ci_lower", "mean_ci_upper"]].values
@@ -47,8 +70,8 @@ def fit_linear_regression_group(df: pd.DataFrame, subset_group: str = "HR_group"
         "p_values": model.pvalues.values,
         "conf_int": model.conf_int().values,
         "r_2": model.rsquared,
-        "X_training": df_training["age_at_investigation"].values,
-        "X_all": df["age_at_investigation"].values,
+        "X_training": df_training[["age_at_investigation", "HR"]].values if regress_HR else df_training["age_at_investigation"].values,
+        "X_all": df[["age_at_investigation", "HR"]].values if regress_HR else df["age_at_investigation"].values,
         "target_training": df_training["target"].values,
         "target_all": df["target"].values,
         "fitted_values_training": mean_prediction_training,
@@ -70,30 +93,55 @@ def fit_linear_regression_group(df: pd.DataFrame, subset_group: str = "HR_group"
 def main(
         n_groups: int  = 5,
         subset: str = "HR",
-        log_y: bool = True
+        bin_method: str = "linear",
+        log_y: bool = False,
+        regress_HR: bool = False,
+        verbose: bool = False
 ) -> None:
 
     script_path = Path(__file__).parent
-    data_path = script_path.parent / "data/database_all_v3.csv"
-    # data_path = script_path.parent / "data/database_all_v5.csv"
-    result_path = script_path.parent / f"results/categorized_regression/log_y_{log_y}"
+    data_path = script_path.parent / "data/database_all_v5.csv"
+    result_path = script_path.parent / f"results/categorized_regression/log_y_{log_y}/{subset}"
     result_path.mkdir(parents=True, exist_ok=True)
+    plot_path = result_path / f"plots"
+    plot_path.mkdir(parents=True, exist_ok=True)
 
     df = pd.read_csv(data_path)
 
-    df = df.dropna(subset=["sig_b"]).reset_index(drop=True)
+    if subset == "HR_sq":
+        df["HR_sq"] = df["HR"] **2
+
+    df = df.dropna(subset=["sig_b", subset], how="any").reset_index(drop=True)
+
     if log_y:
         df["target"] = np.log(df["sig_b"])
     else:
         df["target"] = df["sig_b"]
 
-    if subset == "bitumen":
-        df = df.dropna(subset=[subset]).reset_index(drop=True)
+
+    #TODO: Remove later
+    from main.heterogeneity_regression import fit_linear_regression, set_heterogeneity
+    df = set_heterogeneity(df)
+    df = df.loc[df["heterogeneity_category"].isin(["Homogeen", "Heterogeen", "Matig heterogeen"])].reset_index(drop=True)
+    lr_results = fit_linear_regression(df, heterogeneity_category="Homogeen")
+    df["target"] = lr_results["resid_all"]
+    df = df.loc[df["heterogeneity_category"] != "Matig heterogeen"]
+    df = df.loc[df["heterogeneity_category"] == "Heterogeen"]
+
 
     subset_category = f"{subset}_category"
     subset_group = f"{subset}_group"
 
-    bins = np.linspace(df[subset].min(), df[subset].max(), n_groups+1).tolist()
+    if bin_method == "linear":
+        bins = np.linspace(df[subset].min(), df[subset].max(), n_groups+1).tolist()
+    elif bin_method == "loglinear":
+        bins = np.logspace(np.log10(df[subset].min()), np.log10(df[subset].max()), n_groups+1).tolist()
+    elif bin_method == "quantiles":
+        bins = np.quantile(df[subset], q=np.linspace(0, 1, n_groups+1)).tolist()
+
+    bins = [0, 4, 8, 12, 20]  #TODO
+
+
     labels = [f"{i:.1f}-{j:.1f}" for (i, j) in zip(bins[:-1], bins[1:])]
     df[subset_category] = pd.cut(df[subset], bins=bins, labels=labels, right=False)
     df[subset_group] = df[subset_category].cat.codes
@@ -102,7 +150,7 @@ def main(
     for group in sorted(pd.unique(df[subset_group]).tolist()):
         if len(pd.unique(df.loc[df[subset_group] == group, "age_at_investigation"])) <= 1:
             continue
-        lr_results[labels[group]] = fit_linear_regression_group(df, subset_group=subset_group, group=group)
+        lr_results[labels[group]] = fit_linear_regression_group(df, subset_group=subset_group, group=group, regress_HR=regress_HR)
 
     y = [val["target_training"] for val in lr_results.values()]
     y = np.array([x for sublist in y for x in sublist])
@@ -113,23 +161,32 @@ def main(
     r_2 = r2_score(y, y_hat)
     rmse = np.sqrt(mean_squared_error(y, y_hat))
 
-
-    fig = plt.figure()
-    sns.lmplot(
+    g = sns.lmplot(
         x="age_at_investigation",
         y="target",
         hue=subset_category,
         data=df,
         height=5,
         aspect=1.2,
-        palette="Set1"
+        palette="Set1",
     )
-    plt.xlabel("Age [yr]")
-    plt.ylabel("${σ}_{b}$ [kPa]")
-    plt.suptitle("${R}^{2}$="+f"{r_2*100:.0f}%\nRMSE={rmse:.2f} [kPa]")
-    plt.show()
+
+    g.set_axis_labels("Leeftijd [jaar]", "${\sigma}_{b}$ [kPa]")
+    g.fig.suptitle(r"${R}^{2}$=" + f"{r_2 * 100:.0f}%" + f"\nRMSE={rmse:.2f} [kPa]")
+
+    g._legend.set_bbox_to_anchor((.1, .1))
+    g._legend.set_loc("lower left")
+
+    plt.tight_layout()
+    g.fig.subplots_adjust(top=0.85)
+
+    g.fig.savefig(plot_path / f"Regression with {n_groups} {bin_method} groups.png", dpi=600)
+    plt.close(g.fig)
 
     pass
+
+    if verbose:
+        print(f"R^2 = {r_2 * 100:.0f}%\nRMSE = {rmse:.2f} [kPa]")
 
 
 if __name__ == "__main__":
@@ -137,14 +194,30 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--n_groups", type=int, default=5)
     parser.add_argument("--subset", type=str, default="HR")
-    parser.add_argument("--log_y", action="store_false")
+    parser.add_argument("--bin_method", type=str, default="linear")
+    parser.add_argument("--log_y", action="store_true")
+    parser.add_argument("--regress_HR", action="store_true")
     args = parser.parse_args()
 
     main(
         n_groups=args.n_groups,
         subset=args.subset,
-        # subset="bitumen",
-        # log_y=args.log_y
-        log_y=False
+        bin_method=args.bin_method,
+        log_y=args.log_y,
+        # log_y=True,
+        # regress_HR=args.regress_HR
+        regress_HR=True
     )
+
+    # for subset in ["HR", "bitumen"]:
+    #     for n_groups in [2, 3, 5, 8, 10, 20]:
+    #         print(f"Subset: {subset} and {n_groups} groups")
+    #         main(
+    #             n_groups=n_groups,
+    #             subset=subset,
+    #             bin_method=args.bin_method,
+    #             log_y=False,
+    #             verbose=True
+    #         )
+    #         print("\n")
 
