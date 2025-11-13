@@ -93,7 +93,7 @@ def fit_linear_regression_group(
 def main(
         n_groups: int  = 5,
         subset: str = "HR",
-        bin_method: str = "linear",
+        bin_method: str = "standard",
         log_y: bool = False,
         regress_HR: bool = False,
         verbose: bool = False
@@ -132,15 +132,14 @@ def main(
     subset_category = f"{subset}_category"
     subset_group = f"{subset}_group"
 
-    if bin_method == "linear":
+    if bin_method == "standard":
+        bins = np.array([0, 4, 8, 12, 20])
+    elif bin_method == "linear":
         bins = np.linspace(df[subset].min(), df[subset].max(), n_groups+1).tolist()
     elif bin_method == "loglinear":
         bins = np.logspace(np.log10(df[subset].min()), np.log10(df[subset].max()), n_groups+1).tolist()
     elif bin_method == "quantiles":
         bins = np.quantile(df[subset], q=np.linspace(0, 1, n_groups+1)).tolist()
-
-    bins = [0, 4, 8, 12, 20]  #TODO
-
 
     labels = [f"{i:.1f}-{j:.1f}" for (i, j) in zip(bins[:-1], bins[1:])]
     df[subset_category] = pd.cut(df[subset], bins=bins, labels=labels, right=False)
@@ -180,7 +179,7 @@ def main(
     plt.tight_layout()
     g.fig.subplots_adjust(top=0.85)
 
-    g.fig.savefig(plot_path / f"Regression with {n_groups} {bin_method} groups.png", dpi=600)
+    g.fig.savefig(plot_path / f"Regression with {len(bins)} {bin_method} groups.png", dpi=600)
     plt.close(g.fig)
 
     pass
@@ -194,7 +193,7 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--n_groups", type=int, default=5)
     parser.add_argument("--subset", type=str, default="HR")
-    parser.add_argument("--bin_method", type=str, default="linear")
+    parser.add_argument("--bin_method", type=str, default="standard")
     parser.add_argument("--log_y", action="store_true")
     parser.add_argument("--regress_HR", action="store_true")
     args = parser.parse_args()
