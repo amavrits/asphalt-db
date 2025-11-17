@@ -1,12 +1,11 @@
 import pandas as pd
 import numpy as np
-from scipy import stats
 import statsmodels.api as sm
 from sklearn.metrics import r2_score, mean_squared_error
 from pathlib import Path
 import json
 from argparse import ArgumentParser
-from numpy.typing import NDArray
+from src.old_fit import *
 from typing import List, Tuple, Dict, Optional, Any
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -93,7 +92,7 @@ def fit_linear_regression(
         prediction_training = model.get_prediction(sm.add_constant(df_training[["age_at_investigation", "HR"]]))
     else:
         prediction_training = model.get_prediction(sm.add_constant(df_training["age_at_investigation"]))
-    summary_prediction_training = prediction_training.summary_frame(alpha=0.05)
+    summary_prediction_training = prediction_training.summary_frame(alpha=0.10)
     mean_prediction_training = summary_prediction_training["mean"].values
     ci_prediction_training = summary_prediction_training[["mean_ci_lower", "mean_ci_upper"]].values
     pi_prediction_training = summary_prediction_training[["obs_ci_lower", "obs_ci_upper"]].values
@@ -102,7 +101,7 @@ def fit_linear_regression(
         prediction_all = model.get_prediction(sm.add_constant(df[["age_at_investigation", "HR"]]))
     else:
         prediction_all = model.get_prediction(sm.add_constant(df["age_at_investigation"]))
-    summary_prediction_all = prediction_all.summary_frame(alpha=0.05)
+    summary_prediction_all = prediction_all.summary_frame(alpha=0.10)
     mean_prediction_all = summary_prediction_all["mean"].values
     ci_prediction_all = summary_prediction_all[["mean_ci_lower", "mean_ci_upper"]].values
     pi_prediction_all = summary_prediction_all[["obs_ci_lower", "obs_ci_upper"]].values
@@ -225,6 +224,7 @@ def plot_fits(lr_results: Dict[str, Dict[str, Any]], path: Path, log_y: bool = T
 def main(log_y: bool = False, regress_HR: bool = False) -> None:
 
     script_path = Path(__file__).parent
+    # data_path = script_path.parent / "data/database_all_v3.csv"
     data_path = script_path.parent / "data/database_all_v5.csv"
     result_path = script_path.parent / f"results/heterogeneity_regression/log_y_{log_y}"
     result_path.mkdir(parents=True, exist_ok=True)
@@ -239,12 +239,152 @@ def main(log_y: bool = False, regress_HR: bool = False) -> None:
     else:
         df["target"] = df["sig_b"]
 
+    # df = df.loc[df["heterogeneity_category"] != "Matig heterogeen"]
+
     lr_results = {
         category: fit_linear_regression(df, heterogeneity_category=category, regress_HR=regress_HR)
         for category in pd.unique(df["heterogeneity_category"]).tolist()+["all"]
     }
 
+    sns.scatterplot(df, x="age_at_investigation", y="sig_b", hue="heterogeneity_category")
+    plt.show()
+
+    fig = plt.figure(figsize=(10, 4))
+    colors = ["r", "b"]
+    for i, (key, val) in enumerate(lr_results.items()):
+        if key == "all" or key == "Matig heterogeen":
+            continue
+        plt.scatter([val["beta"][-1]], [key], c=colors[i])
+        plt.plot([val["beta"][-1]-1.96*val["beta_ste"][-1], val["beta"][-1]+1.96*val["beta_ste"][-1]], [key, key], c=colors[i])
+    plt.xlabel("Leeftijd coefficient [kPa/jr]")
+    plt.ylabel("Heterogeniteit categorie")
+    plt.show()
+
+
+    df["yhat_M1"] = lr_results["Homogeen"]["fitted_values_all"]
+    df["resid_M1"] = df["target"] - df["yhat_M1"]
+    df["pi_lower_M1"] = lr_results["Homogeen"]["pi_prediction_all"][:, 0]
+    df["pi_upper_M1"] = lr_results["Homogeen"]["pi_prediction_all"][:, 1]
+
+    df["HR_feat"] = (df["HR"].max() - df["HR"]) ** 2
+    df["target_M2"] = np.log1p(-df["resid_M1"].min()+df["resid_M1"])
+
+    df_M2 = df.loc[df["heterogeneity_category"] != "Homogeen"]
+    model = sm.OLS(df_M2["target_M2"], sm.add_constant(df_M2["HR_feat"])).fit()
+    prediction = model.get_prediction(sm.add_constant(df_M2["HR_feat"]))
+    summary_prediction = prediction.summary_frame(alpha=0.10)
+    mean_prediction = summary_prediction["mean"].values
+    ci_prediction = summary_prediction[["mean_ci_lower", "mean_ci_upper"]].values
+    pi_prediction = summary_prediction[["obs_ci_lower", "obs_ci_upper"]].values
+    df_M2["yhat_M2"] = mean_prediction
+    df_M2["pi_lower_M2"] = pi_prediction[:, 0]
+    df_M2["pi_upper_M2"] = pi_prediction[:, 1]
+
+    df = pd.concat((df.loc[df["heterogeneity_category"] == "Homogeen"], df_M2), axis=0)
+    df = df.sort_values(by=["age_at_investigation"]).reset_index(drop=True)
+
+    df["y_hat"] = np.where(
+        df["heterogeneity_category"] == "Homogeen",
+        df["yhat_M1"],
+        df["yhat_M1"] + np.exp(df["yhat_M2"]+0.5*model.scale) - 1 + df["resid_M1"].min()
+    )
+    
+    df["pi_lower"] = np.where(
+        df["heterogeneity_category"] == "Homogeen",
+        df["pi_lower_M1"],
+        df["pi_lower_M1"] + np.exp(df["pi_lower_M2"]) - 1 + df["resid_M1"].min()
+    )
+    
+    df["pi_upper"] = np.where(
+        df["heterogeneity_category"] == "Homogeen",
+        df["pi_upper_M1"],
+        df["pi_upper_M1"] + np.exp(df["pi_upper_M2"]) - 1 + df["resid_M1"].min()
+    )
+    
+    r2_hom = r2_score(df.loc[df["heterogeneity_category"]=="Homogeen", "target"], df.loc[df["heterogeneity_category"]=="Homogeen", "y_hat"])
+    r2_het = r2_score(df.loc[df["heterogeneity_category"]=="Heterogeen", "target"], df.loc[df["heterogeneity_category"]=="Heterogeen", "y_hat"])
+    r2_all = r2_score(df["target"], df["y_hat"])
+
+    fig = plt.figure()
+    sns.scatterplot(data=df, x="target", y="y_hat", hue="heterogeneity_category")
+    plt.axline([0, 0], slope=1, c="k")
+    plt.xlabel("${σ}_{b}$ Data [kPa]")
+    plt.ylabel("${σ}_{b}$ Model [kPa]")
+    plt.suptitle(f"Homogeen R^2={r2_hom*100:.0f}%\nHeterogeen R^2={r2_het*100:.0f}%\nTotal R^2={r2_all*100:.0f}%", fontsize=12)
+    plt.show()
+
+    fig = plt.figure()
+    colors = {"Heterogeen": "b", "Matig heterogeen": "g", "Homogeen": "r"}
+    for key in ["Homogeen", "Matig heterogeen", "Heterogeen"]:
+        data = df.loc[df["heterogeneity_category"]==key]
+        plt.scatter(data["age_at_investigation"], data["sig_b"], c=colors[key], marker="x", label=key)
+    plt.plot(df["age_at_investigation"], df["yhat_M1"], c=colors["Homogeen"])
+    plt.fill_between(df["age_at_investigation"], df["pi_lower_M1"], df["pi_upper_M1"], color="r", alpha=0.3)
+    plt.plot()
+    plt.xlabel("Leeftijd [jr]")
+    plt.ylabel("${σ}_{b}$ [kPa]")
+    plt.legend()
+    plt.show()
+
+    fig = plt.figure()
+    colors = {"Heterogeen": "b", "Matig heterogeen": "g", "Homogeen": "r"}
+    for key in ["Homogeen", "Matig heterogeen", "Heterogeen"]:
+        data = df.loc[df["heterogeneity_category"]==key]
+        y_err = np.array([data["y_hat"] - data["pi_lower"], data["pi_upper"] - data["y_hat"]])
+        plt.errorbar(
+            x=data["age_at_investigation"],
+            y=data["y_hat"],
+            yerr=y_err,
+            c=colors[key], fmt="o", capsize=5, alpha=0.5, label=key
+        )
+        plt.scatter(data["age_at_investigation"], data["sig_b"], c=colors[key], marker="x")
+    plt.xlabel("Leeftijd [jr]")
+    plt.ylabel("${σ}_{b}$ [kPa]")
+    plt.legend()
+    plt.show()
+
+    fig = plt.figure()
+    plt.scatter(df_M2["age_at_investigation"], df_M2["resid_M1"])
+    plt.xlabel("Leeftijd [jr]")
+    plt.ylabel("Detrended heterogeen data")
+    plt.show()
+
+    fig = plt.figure()
+    plt.scatter(df_M2["HR"], df_M2["resid_M1"])
+    plt.xlabel("HR [%]")
+    plt.ylabel("Detrended heterogeen data")
+    plt.show()
+
+    fig = plt.figure()
+    plt.scatter(df_M2["HR_feat"], df_M2["target_M2"])
+    plt.xlabel("${(max(HR)-HR)}^{2}$")
+    plt.ylabel("ln(1-min(r)+r)\nr is the vector of detrended residuals")
+    plt.show()
+
+    old_model_mean, old_model_pi = fit_old_formula(df)
+    df["old_model_mean_HR_4%"] = old_model_mean
+    df["pi_lower_old_HR_4%"] = old_model_pi[:, 0]
+    df["pi_upper_old_HR_4%"] = old_model_pi[:, 1]
+
+    fig = plt.figure()
+    plt.scatter(df["age_at_investigation"], df["sig_b"], c="b")
+    plt.plot(df["age_at_investigation"], df["old_model_mean_HR_4%"], c="r")
+    plt.fill_between(df["age_at_investigation"], df["pi_lower_old_HR_4%"], df["pi_upper_old_HR_4%"], color="r", alpha=0.3)
+    plt.xlabel("Leeftijd [jr]")
+    plt.ylabel("${σ}_{b}$ [kPa]")
+    plt.show()
+
+
+    df.to_csv(result_path/"data_with_regression_output.csv")
+
     plot_fits(lr_results, result_path, log_y)
+
+    for (key, val) in lr_results.items():
+        for (key2, val2) in val.items():
+            lr_results[key][key2] = val2.tolist() if isinstance(val2, np.ndarray) else val2
+
+    with open(result_path/"lr_results_M1.json", "w") as f:
+        json.dump(lr_results, f, indent=4)
 
 
 if __name__ == "__main__":
