@@ -366,14 +366,30 @@ def main(log_y: bool = False, regress_HR: bool = False) -> None:
     df["pi_lower_old_HR_4%"] = old_model_pi[:, 0]
     df["pi_upper_old_HR_4%"] = old_model_pi[:, 1]
 
-    fig = plt.figure()
-    plt.scatter(df["age_at_investigation"], df["sig_b"], c="b")
-    plt.plot(df["age_at_investigation"], df["old_model_mean_HR_4%"], c="r")
-    plt.fill_between(df["age_at_investigation"], df["pi_lower_old_HR_4%"], df["pi_upper_old_HR_4%"], color="r", alpha=0.3)
-    plt.xlabel("Leeftijd [jr]")
-    plt.ylabel("${σ}_{b}$ [kPa]")
-    plt.show()
+    X = np.c_[np.ones(len(df))*4, sorted(df["age_at_investigation"].values)]
+    old_model_mean = old_formula(X)
+    df["old_fit_model_mean_HR_4%"] = old_model_mean
 
+    fig, axs = plt.subplots(1, 2, figsize=(16, 6))
+    ax = axs[0]
+    sns.scatterplot(data=df, x="age_at_investigation", y="sig_b", hue="heterogeneity_category", ax=axs[0])
+    ax.plot(df["age_at_investigation"], df["yhat_M1"], c="b")
+    ax.fill_between(df["age_at_investigation"], df["pi_lower_M1"], df["pi_upper_M1"], color="b", alpha=0.3)
+    ax.set_xlabel("Leeftijd [jr]")
+    ax.set_ylabel("${σ}_{b}$ [kPa]")
+    ax.set_title("Homogenous model - M1")
+    ax.legend(title="Heterogeniteit", bbox_to_anchor=(0.12, 0.85), ncol=3)
+    ax = axs[1]
+    sns.scatterplot(data=df, x="age_at_investigation", y="sig_b", hue="HR", ax=axs[1])
+    ax.plot(df["age_at_investigation"], df["old_model_mean_HR_4%"], c="r", label="Old formula\nw/ new fit")
+    ax.plot(df["age_at_investigation"], df["old_fit_model_mean_HR_4%"], c="b", label="Old model")
+    ax.fill_between(df["age_at_investigation"], df["pi_lower_old_HR_4%"], df["pi_upper_old_HR_4%"], color="r", alpha=0.3)
+    ax.set_xlabel("Leeftijd [jr]")
+    ax.set_ylabel("${σ}_{b}$ [kPa]")
+    ax.set_title("Old formula w/ HR=4%")
+    ax.legend(title="HR [%]", bbox_to_anchor=(1, 1.0))
+    plt.savefig(result_path/"plot.png", dpi=300, bbox_inches="tight")
+    plt.show()
 
     df.to_csv(result_path/"data_with_regression_output.csv")
 

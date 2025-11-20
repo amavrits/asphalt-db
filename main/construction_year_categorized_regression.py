@@ -14,6 +14,7 @@ import seaborn as sns
 # sns.set_style("whitegrid")
 import warnings
 from statsmodels.tools.sm_exceptions import ValueWarning
+
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 warnings.filterwarnings(
@@ -25,7 +26,7 @@ warnings.filterwarnings(
 
 def fit_linear_regression_group(
         df: pd.DataFrame,
-        subset_group: str = "HR_group",
+        subset_group: str = "construction_category",
         group: int = 0,
         regress_HR: bool = False
 ) -> Dict[str, Any]:
@@ -93,7 +94,6 @@ def fit_linear_regression_group(
 
 def main(
         n_groups: int  = 5,
-        subset: str = "HR",
         bin_method: str = "standard",
         log_y: bool = False,
         regress_HR: bool = False,
@@ -101,55 +101,45 @@ def main(
 ) -> None:
 
     script_path = Path(__file__).parent
+    # data_path = script_path.parent / "data/database_all_v3.csv"
     data_path = script_path.parent / "data/database_all_v5.csv"
-    result_path = script_path.parent / f"results/categorized_regression/log_y_{log_y}/{subset}"
+    result_path = script_path.parent / f"results/construction_year_categorized_regression/log_y_{log_y}/"
     result_path.mkdir(parents=True, exist_ok=True)
     plot_path = result_path / f"plots"
     plot_path.mkdir(parents=True, exist_ok=True)
 
     df = pd.read_csv(data_path)
 
-    if subset == "HR_sq":
-        df["HR_sq"] = df["HR"] **2
-
-    df = df.dropna(subset=["sig_b", subset], how="any").reset_index(drop=True)
-
     if log_y:
         df["target"] = np.log(df["sig_b"])
     else:
         df["target"] = df["sig_b"]
 
+    subset_group = "construction_category"
+    year_edges = [1900, 1973, 1980, 1995, 2025]
+    year_bins = [f"{year_1}-{year_2}" for (year_1, year_2) in zip(year_edges[:-1], year_edges[1:])]
+    idx = []
+    for i, row in df.iterrows():
+        construction_year = row["construction_year"]
+        idx.append(max([i if year < construction_year else -np.inf for i, year in enumerate(year_edges)]))
+    df[subset_group] = [year_bins[i] for i in idx]
+    # df[subset_group] = df["construction_year"]
 
-    #TODO: Remove later
+    df = df.dropna(subset=["sig_b", subset_group], how="any").reset_index(drop=True)
+
     df = set_heterogeneity(df)
     df = df.loc[df["heterogeneity_category"].isin(["Homogeen", "Heterogeen", "Matig heterogeen"])].reset_index(drop=True)
     lr_results = fit_linear_regression(df, heterogeneity_category="Homogeen")
     df["target"] = lr_results["resid_all"]
-    df = df.loc[df["heterogeneity_category"] != "Matig heterogeen"]
+    # df = df.loc[df["heterogeneity_category"] != "Matig heterogeen"]
     df = df.loc[df["heterogeneity_category"] == "Heterogeen"]
-
-
-    subset_category = f"{subset}_category"
-    subset_group = f"{subset}_group"
-
-    if bin_method == "standard":
-        bins = np.array([0, 4, 8, 12, 20])
-    elif bin_method == "linear":
-        bins = np.linspace(df[subset].min(), df[subset].max(), n_groups+1).tolist()
-    elif bin_method == "loglinear":
-        bins = np.logspace(np.log10(df[subset].min()), np.log10(df[subset].max()), n_groups+1).tolist()
-    elif bin_method == "quantiles":
-        bins = np.quantile(df[subset], q=np.linspace(0, 1, n_groups+1)).tolist()
-
-    labels = [f"{i:.1f}-{j:.1f}" for (i, j) in zip(bins[:-1], bins[1:])]
-    df[subset_category] = pd.cut(df[subset], bins=bins, labels=labels, right=False)
-    df[subset_group] = df[subset_category].cat.codes
+    # df = df.loc[df["heterogeneity_category"] == "Homogeen"]
 
     lr_results = {}
     for group in sorted(pd.unique(df[subset_group]).tolist()):
         if len(pd.unique(df.loc[df[subset_group] == group, "age_at_investigation"])) <= 1:
             continue
-        lr_results[labels[group]] = fit_linear_regression_group(df, subset_group=subset_group, group=group, regress_HR=regress_HR)
+        lr_results[group] = fit_linear_regression_group(df, subset_group=subset_group, group=group, regress_HR=regress_HR)
 
     y = [val["target_training"] for val in lr_results.values()]
     y = np.array([x for sublist in y for x in sublist])
@@ -163,7 +153,7 @@ def main(
     g = sns.lmplot(
         x="age_at_investigation",
         y="target",
-        hue=subset_category,
+        hue=subset_group,
         data=df,
         height=5,
         aspect=1.2,
@@ -179,33 +169,30 @@ def main(
     plt.tight_layout()
     g.fig.subplots_adjust(top=0.85)
 
-    g.fig.savefig(plot_path / f"Regression with {len(bins)} {bin_method} groups.png", dpi=600)
+    g.fig.savefig(plot_path / f"Regression construction year groups.png", dpi=600)
     plt.close(g.fig)
 
-    pass
+    for (key, val) in lr_results.items():
+        pval = val["p_values"][-1]
+        print(f"Category {key}, p-value={pval}, statistical significance: {pval<=0.05}")
 
-    if verbose:
-        print(f"R^2 = {r_2 * 100:.0f}%\nRMSE = {rmse:.2f} [kPa]")
+    pass
 
 
 if __name__ == "__main__":
 
     parser = ArgumentParser()
     parser.add_argument("--n_groups", type=int, default=5)
-    parser.add_argument("--subset", type=str, default="HR")
-    parser.add_argument("--bin_method", type=str, default="standard")
     parser.add_argument("--log_y", action="store_true")
     parser.add_argument("--regress_HR", action="store_true")
     args = parser.parse_args()
 
     main(
         n_groups=args.n_groups,
-        subset=args.subset,
-        bin_method=args.bin_method,
         log_y=args.log_y,
         # log_y=True,
         # regress_HR=args.regress_HR
-        regress_HR=True
+        regress_HR=False
     )
 
     # for subset in ["HR", "bitumen"]:
