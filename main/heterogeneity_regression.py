@@ -231,6 +231,8 @@ def main(log_y: bool = False, regress_HR: bool = False) -> None:
 
     df = pd.read_csv(data_path)
 
+    df = df.loc[df["age_at_investigation"] < 50]
+
     df = set_heterogeneity(df)
     df = df.loc[df["heterogeneity_category"].isin(["Homogeen", "Heterogeen", "Matig heterogeen"])].reset_index(drop=True)
     df = df.dropna(subset=["sig_b"]).reset_index(drop=True)
@@ -240,6 +242,22 @@ def main(log_y: bool = False, regress_HR: bool = False) -> None:
         df["target"] = df["sig_b"]
 
     # df = df.loc[df["heterogeneity_category"] != "Matig heterogeen"]
+
+
+    df = df.groupby("project_dike_id").agg({
+        "age_at_investigation": "mean",
+        "investigation_year": "mean",
+        "construction_year": "mean",
+        "HR": "mean",
+        "sig_b": "mean",
+        "target": "mean",
+        "heterogeneity_category": "first",
+    })
+    if log_y:
+        df["target"] = np.log(df["sig_b"])
+    else:
+        df["target"] = df["sig_b"]
+
 
     lr_results = {
         category: fit_linear_regression(df, heterogeneity_category=category, regress_HR=regress_HR)

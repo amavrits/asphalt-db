@@ -115,31 +115,36 @@ def main(
     else:
         df["target"] = df["sig_b"]
 
-    subset_group = "construction_category"
-    year_edges = [1900, 1973, 1980, 1995, 2025]
-    year_bins = [f"{year_1}-{year_2}" for (year_1, year_2) in zip(year_edges[:-1], year_edges[1:])]
-    idx = []
-    for i, row in df.iterrows():
-        construction_year = row["construction_year"]
-        idx.append(max([i if year < construction_year else -np.inf for i, year in enumerate(year_edges)]))
-    df[subset_group] = [year_bins[i] for i in idx]
-    # df[subset_group] = df["construction_year"]
+    # subset_group = "construction_category"
+    # year_edges = [1900, 1973, 1993, 1995, 2025]
+    # year_bins = [f"{year_1}-{year_2}" for (year_1, year_2) in zip(year_edges[:-1], year_edges[1:])]
+    # idx = []
+    # for i, row in df.iterrows():
+    #     construction_year = row["construction_year"]
+    #     idx.append(max([i if year < construction_year else -np.inf for i, year in enumerate(year_edges)]))
+    # df[subset_group] = [year_bins[i] for i in idx]
 
-    df = df.dropna(subset=["sig_b", subset_group], how="any").reset_index(drop=True)
+    subset_group = "construction_category"
+    df[subset_group] = 0
+    year_ranges = [[1973, 1993], [1983, 2003], [1993, 2013], [2003, 2025]]
+
+    # df = df.dropna(subset=["sig_b", subset_group], how="any").reset_index(drop=True)
+    df = df.dropna(subset=["sig_b"], how="any").reset_index(drop=True)
 
     df = set_heterogeneity(df)
     df = df.loc[df["heterogeneity_category"].isin(["Homogeen", "Heterogeen", "Matig heterogeen"])].reset_index(drop=True)
-    lr_results = fit_linear_regression(df, heterogeneity_category="Homogeen")
-    df["target"] = lr_results["resid_all"]
     # df = df.loc[df["heterogeneity_category"] != "Matig heterogeen"]
-    df = df.loc[df["heterogeneity_category"] == "Heterogeen"]
-    # df = df.loc[df["heterogeneity_category"] == "Homogeen"]
+    # df = df.loc[df["heterogeneity_category"] == "Heterogeen"]
+    df = df.loc[df["heterogeneity_category"] == "Homogeen"]
 
     lr_results = {}
-    for group in sorted(pd.unique(df[subset_group]).tolist()):
-        if len(pd.unique(df.loc[df[subset_group] == group, "age_at_investigation"])) <= 1:
-            continue
-        lr_results[group] = fit_linear_regression_group(df, subset_group=subset_group, group=group, regress_HR=regress_HR)
+    df_years = []
+    for year_range in year_ranges:
+        df_year = df.loc[(df["construction_year"] >= year_range[0]) & (df["construction_year"] <= year_range[1])]
+        lr_results[f"{year_range[0]}-{year_range[1]}"] = fit_linear_regression_group(df_year, subset_group=subset_group, regress_HR=regress_HR)
+        df_year[subset_group] = f"{year_range[0]}-{year_range[1]}"
+        df_years.append(df_year)
+    df_years = pd.concat(df_years, axis=0)
 
     y = [val["target_training"] for val in lr_results.values()]
     y = np.array([x for sublist in y for x in sublist])
@@ -147,21 +152,21 @@ def main(
     y_hat = [val["fitted_values_training"] for val in lr_results.values()]
     y_hat = np.array([x for sublist in y_hat for x in sublist])
 
-    r_2 = r2_score(y, y_hat)
-    rmse = np.sqrt(mean_squared_error(y, y_hat))
+    # r_2 = r2_score(y, y_hat)
+    # rmse = np.sqrt(mean_squared_error(y, y_hat))
 
     g = sns.lmplot(
         x="age_at_investigation",
         y="target",
         hue=subset_group,
-        data=df,
+        data=df_years,
         height=5,
         aspect=1.2,
         palette="Set1",
     )
 
     g.set_axis_labels("Leeftijd [jaar]", "${\sigma}_{b}$ [kPa]")
-    g.fig.suptitle(r"${R}^{2}$=" + f"{r_2 * 100:.0f}%" + f"\nRMSE={rmse:.2f} [kPa]")
+    # g.fig.suptitle(r"${R}^{2}$=" + f"{r_2 * 100:.0f}%" + f"\nRMSE={rmse:.2f} [kPa]")
 
     g._legend.set_bbox_to_anchor((.1, .1))
     g._legend.set_loc("lower left")
