@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from scipy.stats import norm
 import statsmodels.api as sm
 from sklearn.metrics import r2_score, mean_squared_error
 from pathlib import Path
@@ -9,7 +10,11 @@ from src.old_fit import *
 from typing import List, Tuple, Dict, Optional, Any
 import matplotlib.pyplot as plt
 import seaborn as sns
-# sns.set_style("whitegrid")
+
+
+sns.set_style("whitegrid")
+sns.set_palette("rocket")
+hue_order = ['Homogeen', 'Matig heterogeen', 'Heterogeen']
 
 
 def categorize_heterogeneity(cov: float) -> str:
@@ -172,25 +177,25 @@ def plot_lr_fit(lr_results: Dict[str, Dict[str, Any]], path: Path, key: str, log
         fig, axs = plt.subplots(1, 2, sharex=True, figsize=(16, 6))
 
         ax = axs[0]
-        ax.fill_between(X_all, pi[:, 0], pi[:, 1], color="r", alpha=0.1, label="95% PI")
-        ax.fill_between(X_all, ci[:, 0], ci[:, 1], color="r", alpha=0.3, label="95% CI")
+        ax.fill_between(X_all, pi[:, 0], pi[:, 1], color="r", alpha=0.1, label="90% PI")
+        ax.fill_between(X_all, ci[:, 0], ci[:, 1], color="r", alpha=0.3, label="90% CI")
         ax.scatter(X_all, y_all, c="b", alpha=0.4, label="Volledige dataset")
         ax.scatter(X_training, y_training, c="r", alpha=0.4, label=f"Training ({key.lower()}) dataset")
         ax.plot(X_all, y_hat, c="r", label="Regression fit")
         ax.set_xlabel("Leeftijd [jaar]", fontsize=14)
-        ax.set_ylabel("$ln({σ}_{b})$ [ln(kPa)]", fontsize=14)
+        ax.set_ylabel("$ln({σ}_{b})$ [ln(MPa)]", fontsize=14)
         ax.legend(fontsize=12, loc="lower left")
         ax.grid()
         ax.set_title("Leeftijd-$ln({σ}_{b})$")
 
         ax = axs[1]
-        ax.fill_between(X_all, np.exp(pi[:, 0]), np.exp(pi[:, 1]), color="r", alpha=0.1, label="95% PI")
-        ax.fill_between(X_all, np.exp(ci[:, 0]+0.5*se**2), np.exp(ci[:, 1]+0.5*se**2), color="r", alpha=0.3, label="95% CI")
+        ax.fill_between(X_all, np.exp(pi[:, 0]), np.exp(pi[:, 1]), color="r", alpha=0.1, label="90% PI")
+        ax.fill_between(X_all, np.exp(ci[:, 0]+0.5*se**2), np.exp(ci[:, 1]+0.5*se**2), color="r", alpha=0.3, label="90% CI")
         ax.scatter(X_all, np.exp(y_all+0.5*se**2), c="b", alpha=0.4, label="Volledige dataset")
         ax.scatter(X_training, np.exp(y_training), c="r", alpha=0.4, label=f"Training ({key.lower()}) dataset")
         ax.plot(X_all, np.exp(y_hat+0.5*se**2), c="r", label="Regression fit")
         ax.set_xlabel("Leeftijd [jaar]", fontsize=14)
-        ax.set_ylabel("${σ}_{b}$ [kPa]", fontsize=14)
+        ax.set_ylabel("${σ}_{b}$ [MPa]", fontsize=14)
         ax.legend(fontsize=12, loc="lower left")
         ax.grid()
         ax.set_title("Leeftijd-${σ}_{b}$")
@@ -198,13 +203,13 @@ def plot_lr_fit(lr_results: Dict[str, Dict[str, Any]], path: Path, key: str, log
     else:
 
         fig = plt.figure()
-        plt.fill_between(X_all, pi[:, 0], pi[:, 1], color="r", alpha=0.1, label="95% PI")
-        plt.fill_between(X_all, ci[:, 0], ci[:, 1], color="r", alpha=0.3, label="95% CI")
+        plt.fill_between(X_all, pi[:, 0], pi[:, 1], color="r", alpha=0.1, label="90% PI")
+        plt.fill_between(X_all, ci[:, 0], ci[:, 1], color="r", alpha=0.3, label="90% CI")
         plt.scatter(X_all, y_all, c="b", alpha=0.4, label="Volledige dataset")
         plt.scatter(X_training, y_training, c="r", alpha=0.4, label=f"Training ({key.lower()}) dataset")
         plt.plot(X_all, y_hat, c="r", label="Regression fit")
         plt.xlabel("Leeftijd [jaar]", fontsize=14)
-        plt.ylabel("${σ}_{b}$ [kPa]", fontsize=14)
+        plt.ylabel("${σ}_{b}$ [MPa]", fontsize=14)
         plt.legend(fontsize=12, loc="lower left")
         plt.grid()
 
@@ -244,19 +249,19 @@ def main(log_y: bool = False, regress_HR: bool = False) -> None:
     # df = df.loc[df["heterogeneity_category"] != "Matig heterogeen"]
 
 
-    df = df.groupby("project_dike_id").agg({
-        "age_at_investigation": "mean",
-        "investigation_year": "mean",
-        "construction_year": "mean",
-        "HR": "mean",
-        "sig_b": "mean",
-        "target": "mean",
-        "heterogeneity_category": "first",
-    })
-    if log_y:
-        df["target"] = np.log(df["sig_b"])
-    else:
-        df["target"] = df["sig_b"]
+    # df = df.groupby("project_dike_id").agg({
+    #     "age_at_investigation": "mean",
+    #     "investigation_year": "mean",
+    #     "construction_year": "mean",
+    #     "HR": "mean",
+    #     "sig_b": "mean",
+    #     "target": "mean",
+    #     "heterogeneity_category": "first",
+    # })
+    # if log_y:
+    #     df["target"] = np.log(df["sig_b"])
+    # else:
+    #     df["target"] = df["sig_b"]
 
 
     lr_results = {
@@ -274,22 +279,27 @@ def main(log_y: bool = False, regress_HR: bool = False) -> None:
             continue
         plt.scatter([val["beta"][-1]], [key], c=colors[i])
         plt.plot([val["beta"][-1]-1.96*val["beta_ste"][-1], val["beta"][-1]+1.96*val["beta_ste"][-1]], [key, key], c=colors[i])
-    plt.xlabel("Leeftijd coefficient [kPa/jr]")
+    plt.xlabel("Leeftijd coefficient [MPa/jr]")
     plt.ylabel("Heterogeniteit categorie")
     plt.show()
 
-
     df["yhat_M1"] = lr_results["Homogeen"]["fitted_values_all"]
     df["resid_M1"] = df["target"] - df["yhat_M1"]
+    df["ci_lower_M1"] = lr_results["Homogeen"]["ci_prediction_all"][:, 0]
+    df["ci_upper_M1"] = lr_results["Homogeen"]["ci_prediction_all"][:, 1]
     df["pi_lower_M1"] = lr_results["Homogeen"]["pi_prediction_all"][:, 0]
     df["pi_upper_M1"] = lr_results["Homogeen"]["pi_prediction_all"][:, 1]
 
-    df["HR_feat"] = (df["HR"].max() - df["HR"]) ** 2
-    df["target_M2"] = np.log1p(-df["resid_M1"].min()+df["resid_M1"])
+    df["target_M2"] = df["resid_M1"]
 
     df_M2 = df.loc[df["heterogeneity_category"] != "Homogeen"]
-    model = sm.OLS(df_M2["target_M2"], sm.add_constant(df_M2["HR_feat"])).fit()
-    prediction = model.get_prediction(sm.add_constant(df_M2["HR_feat"]))
+    model = sm.OLS(df_M2["target_M2"], sm.add_constant(df_M2["HR"])).fit()
+    # model = sm.OLS(df_M2.loc[df_M2["heterogeneity_category"] == "Heterogeen", "target_M2"], sm.add_constant(df_M2.loc[df_M2["heterogeneity_category"] == "Heterogeen", "HR"])).fit()
+    # y = df_M2["target_M2"]
+    # y_hat = model.predict(sm.add_constant(df_M2["HR"]))
+    # from sklearn.metrics import r2_score
+    # r2_score(y, y_hat)
+    prediction = model.get_prediction(sm.add_constant(df_M2["HR"]))
     summary_prediction = prediction.summary_frame(alpha=0.10)
     mean_prediction = summary_prediction["mean"].values
     ci_prediction = summary_prediction[["mean_ci_lower", "mean_ci_upper"]].values
@@ -306,19 +316,19 @@ def main(log_y: bool = False, regress_HR: bool = False) -> None:
         df["yhat_M1"],
         df["yhat_M1"] + np.exp(df["yhat_M2"]+0.5*model.scale) - 1 + df["resid_M1"].min()
     )
-    
+
     df["pi_lower"] = np.where(
         df["heterogeneity_category"] == "Homogeen",
         df["pi_lower_M1"],
         df["pi_lower_M1"] + np.exp(df["pi_lower_M2"]) - 1 + df["resid_M1"].min()
     )
-    
+
     df["pi_upper"] = np.where(
         df["heterogeneity_category"] == "Homogeen",
         df["pi_upper_M1"],
         df["pi_upper_M1"] + np.exp(df["pi_upper_M2"]) - 1 + df["resid_M1"].min()
     )
-    
+
     r2_hom = r2_score(df.loc[df["heterogeneity_category"]=="Homogeen", "target"], df.loc[df["heterogeneity_category"]=="Homogeen", "y_hat"])
     r2_het = r2_score(df.loc[df["heterogeneity_category"]=="Heterogeen", "target"], df.loc[df["heterogeneity_category"]=="Heterogeen", "y_hat"])
     r2_all = r2_score(df["target"], df["y_hat"])
@@ -326,8 +336,8 @@ def main(log_y: bool = False, regress_HR: bool = False) -> None:
     fig = plt.figure()
     sns.scatterplot(data=df, x="target", y="y_hat", hue="heterogeneity_category")
     plt.axline([0, 0], slope=1, c="k")
-    plt.xlabel("${σ}_{b}$ Data [kPa]")
-    plt.ylabel("${σ}_{b}$ Model [kPa]")
+    plt.xlabel("${σ}_{b}$ Data [MPa]")
+    plt.ylabel("${σ}_{b}$ Model [MPa]")
     plt.suptitle(f"Homogeen R^2={r2_hom*100:.0f}%\nHeterogeen R^2={r2_het*100:.0f}%\nTotal R^2={r2_all*100:.0f}%", fontsize=12)
     plt.show()
 
@@ -340,7 +350,7 @@ def main(log_y: bool = False, regress_HR: bool = False) -> None:
     plt.fill_between(df["age_at_investigation"], df["pi_lower_M1"], df["pi_upper_M1"], color="r", alpha=0.3)
     plt.plot()
     plt.xlabel("Leeftijd [jr]")
-    plt.ylabel("${σ}_{b}$ [kPa]")
+    plt.ylabel("${σ}_{b}$ [MPa]")
     plt.legend()
     plt.show()
 
@@ -357,14 +367,24 @@ def main(log_y: bool = False, regress_HR: bool = False) -> None:
         )
         plt.scatter(data["age_at_investigation"], data["sig_b"], c=colors[key], marker="x")
     plt.xlabel("Leeftijd [jr]")
-    plt.ylabel("${σ}_{b}$ [kPa]")
+    plt.ylabel("${σ}_{b}$ [MPa]")
     plt.legend()
     plt.show()
 
     fig = plt.figure()
-    plt.scatter(df_M2["age_at_investigation"], df_M2["resid_M1"])
-    plt.xlabel("Leeftijd [jr]")
-    plt.ylabel("Detrended heterogeen data")
+    sns.scatterplot(data=df, x="age_at_investigation", y="resid_M1", hue="heterogeneity_category",  palette='rocket', s=30, alpha= 0.8, hue_order=hue_order)
+    plt.axhline(0, linestyle="--", c="k")
+    plt.xlabel("Leeftijd [jr]", fontsize=14)
+    plt.ylabel("${σ}_{b}$ residuen met Model 1 [MPa]", fontsize=14)
+    plt.legend(loc="lower left", fontsize=10, title="Heterogeniteitscategorie")
+    plt.show()
+
+    fig = plt.figure()
+    sns.scatterplot(data=df, x="HR", y="resid_M1", hue="heterogeneity_category",  palette='rocket', s=30, alpha= 0.8, hue_order=hue_order)
+    plt.axhline(0, linestyle="--", c="k")
+    plt.xlabel("HR [%]", fontsize=14)
+    plt.ylabel("${σ}_{b}$ residuen met Model 1 [MPa]", fontsize=14)
+    plt.legend(loc="lower left", fontsize=10, title="Heterogeniteitscategorie")
     plt.show()
 
     fig = plt.figure()
@@ -374,7 +394,7 @@ def main(log_y: bool = False, regress_HR: bool = False) -> None:
     plt.show()
 
     fig = plt.figure()
-    plt.scatter(df_M2["HR_feat"], df_M2["target_M2"])
+    plt.scatter(df_M2["HR"], df_M2["target_M2"])
     plt.xlabel("${(max(HR)-HR)}^{2}$")
     plt.ylabel("ln(1-min(r)+r)\nr is the vector of detrended residuals")
     plt.show()
@@ -394,7 +414,7 @@ def main(log_y: bool = False, regress_HR: bool = False) -> None:
     ax.plot(df["age_at_investigation"], df["yhat_M1"], c="b")
     ax.fill_between(df["age_at_investigation"], df["pi_lower_M1"], df["pi_upper_M1"], color="b", alpha=0.3)
     ax.set_xlabel("Leeftijd [jr]")
-    ax.set_ylabel("${σ}_{b}$ [kPa]")
+    ax.set_ylabel("${σ}_{b}$ [MPa]")
     ax.set_title("Homogenous model - M1")
     ax.legend(title="Heterogeniteit", bbox_to_anchor=(0.12, 0.85), ncol=3)
     ax = axs[1]
@@ -403,11 +423,86 @@ def main(log_y: bool = False, regress_HR: bool = False) -> None:
     ax.plot(df["age_at_investigation"], df["old_fit_model_mean_HR_4%"], c="b", label="Old model")
     ax.fill_between(df["age_at_investigation"], df["pi_lower_old_HR_4%"], df["pi_upper_old_HR_4%"], color="r", alpha=0.3)
     ax.set_xlabel("Leeftijd [jr]")
-    ax.set_ylabel("${σ}_{b}$ [kPa]")
+    ax.set_ylabel("${σ}_{b}$ [MPa]")
     ax.set_title("Old formula w/ HR=4%")
     ax.legend(title="HR [%]", bbox_to_anchor=(1, 1.0))
     plt.savefig(result_path/"plot.png", dpi=300, bbox_inches="tight")
     plt.show()
+
+
+    data = lr_results["Homogeen"]
+    X_training = data["X_training"]
+    X_training = X_training if X_training.ndim == 1 else X_training[:, 0]
+    y_training = data["target_training"]
+
+    X_all = data["X_all"]
+    X_all = X_all if X_all.ndim == 1 else X_all[:, 0]
+    idx_sort = np.argsort(X_all)
+    X_all = X_all[idx_sort]
+    y_all = data["target_all"][idx_sort]
+    y_hat = data["fitted_values_all"][idx_sort]
+    ci = data["ci_prediction_all"][idx_sort]
+    pi = data["pi_prediction_all"][idx_sort]
+    se = data["se"]
+
+    fig = plt.figure()
+    sns.scatterplot(data=df, x="age_at_investigation", y="target", hue='heterogeneity_category',  palette='rocket', s=30, alpha= 0.8, hue_order=hue_order)
+    plt.plot(X_all, y_hat, c="g", label="Regression fit - Homogeen")
+    plt.fill_between(X_all, ci[:, 0], ci[:, 1], color="g", alpha=0.3, label="90% CI")
+    plt.fill_between(X_all, pi[:, 0], pi[:, 1], color="g", alpha=0.1, label="90% PI")
+    plt.xlabel("Leeftijd [jaar]", fontsize=14)
+    plt.ylabel("${σ}_{b}$ [MPa]", fontsize=14)
+    plt.legend(fontsize=10, loc="lower left")
+    plt.show()
+
+
+    # -----------------------------------------------------------------------
+    HR_grid = np.linspace(df_M2["HR"].min(), df_M2["HR"].max(), 100)
+    heterogeen_predictions = model.predict(sm.add_constant(HR_grid))
+    prediction = model.get_prediction(sm.add_constant(HR_grid))
+    summary_prediction = prediction.summary_frame(alpha=0.10)
+    mean_prediction = summary_prediction["mean"].values
+    ci_prediction = summary_prediction[["mean_ci_lower", "mean_ci_upper"]].values
+    pi_prediction = summary_prediction[["obs_ci_lower", "obs_ci_upper"]].values
+
+    fig = plt.figure()
+    sns.scatterplot(data=df_M2, x="HR", y="target_M2", hue='heterogeneity_category',  palette='rocket', s=30, alpha= 0.8, hue_order=hue_order)
+    plt.plot(HR_grid, heterogeen_predictions, c="g", label="Regression fit - Heterogeen")
+    plt.fill_between(HR_grid, ci_prediction[:, 0], ci_prediction[:, 1], color="g", alpha=0.3, label="90% CI")
+    plt.fill_between(HR_grid, pi_prediction[:, 0], pi_prediction[:, 1], color="g", alpha=0.1, label="90% PI")
+    plt.xlabel("HR [%]", fontsize=14)
+    plt.ylabel("${σ}_{b}$ residuen met Model 1 [MPa]", fontsize=14)
+    plt.legend(fontsize=10, loc="lower left")
+    plt.show()
+    # -----------------------------------------------------------------------
+
+    fig = plt.figure()
+    sns.scatterplot(data=df, x="age_at_investigation", y="target", hue='heterogeneity_category',  palette='rocket', s=30, alpha= 0.8, hue_order=hue_order)
+    plt.plot(X_all, y_hat, c="g", label="Regression fit - Homogeen")
+    plt.fill_between(X_all, ci[:, 0], ci[:, 1], color="g", alpha=0.3, label="90% CI")
+    plt.fill_between(X_all, pi[:, 0], pi[:, 1], color="g", alpha=0.1, label="90% PI")
+    plt.xlabel("Leeftijd [jaar]", fontsize=14)
+    # plt.ylabel(r"${\sigma}_{b}$ [MPa]", fontsize=14)
+    plt.ylabel(r"$\bar{\sigma}_{b}$ [MPa]", fontsize=14)
+    plt.legend(fontsize=10, loc="lower left")
+    plt.legend(loc="lower left", fontsize=10)
+    plt.show()
+
+
+    # -----------------------------------------------------------------------
+    model_all = sm.OLS(df["target"], sm.add_constant(df["age_at_investigation"])).fit()
+    prediction_mean_all = model_all.predict(sm.add_constant(df["age_at_investigation"]))
+
+    fig = plt.figure()
+    sns.scatterplot(data=df, x="age_at_investigation", y="target", hue='heterogeneity_category',  palette='rocket', s=30, alpha= 0.8, hue_order=hue_order)
+    plt.plot(df["age_at_investigation"], prediction_mean_all, c="k", label="Regression fit -\nVolledige dataset")
+    plt.fill_between(X_all, ci[:, 0], ci[:, 1], color="g", alpha=0.3, label="90% CI")
+    plt.fill_between(X_all, pi[:, 0], pi[:, 1], color="g", alpha=0.1, label="90% PI")
+    plt.xlabel("Leeftijd [jaar]", fontsize=14)
+    plt.ylabel("${σ}_{b}$ [MPa]", fontsize=14)
+    plt.legend(loc="lower left", fontsize=10)
+    plt.show()
+    # -----------------------------------------------------------------------
 
     df.to_csv(result_path/"data_with_regression_output.csv")
 
@@ -419,6 +514,78 @@ def main(log_y: bool = False, regress_HR: bool = False) -> None:
 
     with open(result_path/"lr_results_M1.json", "w") as f:
         json.dump(lr_results, f, indent=4)
+
+        # -----------------------------------------------------------------------
+    HR = np.ones_like(df["y_hat"]) * 4
+    heterogeen_predictions = model.predict(sm.add_constant(HR, has_constant="add"))
+    prediction = model.get_prediction(sm.add_constant(HR, has_constant="add"))
+    summary_prediction = prediction.summary_frame(alpha=0.10)
+    mean_prediction = summary_prediction["mean"].values
+    ci_prediction = summary_prediction[["mean_ci_lower", "mean_ci_upper"]].values
+    pi_prediction = summary_prediction[["obs_ci_lower", "obs_ci_upper"]].values
+
+    y_hat = df["yhat_M1"] + heterogeen_predictions
+    ci_prediction = ci_prediction + lr_results["Homogeen"]["ci_prediction_all"]
+    pi_prediction = pi_prediction + lr_results["Homogeen"]["pi_prediction_all"]
+
+    # fig = plt.figure()
+    # sns.scatterplot(data=df, x="age_at_investigation", y="target", hue='heterogeneity_category',  palette='rocket', s=30, alpha= 0.8, hue_order=hue_order)
+    # plt.plot(df["age_at_investigation"], y_hat, c="g", label="Regression fit - Heterogeen")
+    # # plt.fill_between(df["age_at_investigation"], df["ci_lower"], df["ci_upper"], color="g", alpha=0.3, label="90% CI")
+    # plt.fill_between(df["age_at_investigation"], df["pi_lower"], df["pi_upper"], color="g", alpha=0.1, label="90% PI")
+    # plt.xlabel("Leeftijd [jaar]", fontsize=14)
+    # plt.ylabel("${σ}_{b}$ [MPa]", fontsize=14)
+    # plt.legend(fontsize=10, loc="lower left")
+    # plt.show()
+
+    m1_int = lr_results["Homogeen"]["beta"][0]
+    m1_slope = lr_results["Homogeen"]["beta"][1]
+    m1_se = lr_results["Homogeen"]["se"]
+    m2_int = model.params.values[0]
+    m2_slope = model.params.values[0]
+    m2_se = np.sqrt(model.scale)
+
+    preds = []
+    for i, row in df.iterrows():
+        age = row["age_at_investigation"]
+        hr = row["HR"]
+        y = row["target"]
+        heterogeneity_category = row["heterogeneity_category"]
+        y_hat = m1_int + m2_int + m1_slope * age
+        if heterogeneity_category == "Homogeen":
+            y_hat = m1_int + m1_slope * age
+            se = m1_se ** 2
+        else:
+            y_hat = m1_int + m2_int + m1_slope * age + m2_slope * hr
+            se = np.sqrt(m1_se ** 2 + m2_se ** 2)
+        pi_lower = y_hat + se * norm.ppf(0.05)
+        pi_upper = y_hat + se * norm.ppf(0.95)
+        data = {
+            "age": age,
+            "heterogeneity_category": heterogeneity_category,
+            "hr": hr,
+            "y": y,
+            "y_hat": y_hat,
+            "pi_lower": pi_lower,
+            "pi_upper": pi_upper,
+        }
+        preds.append(data)
+
+    data = pd.DataFrame.from_records(preds)
+    data["lower_err"] = df["y_hat"] - df["pi_lower"]
+    data["upper_err"] = df["pi_upper"] - df["y_hat"]
+
+    fig = plt.figure()
+    sns.scatterplot(data=data, x="y", y="y_hat", hue='heterogeneity_category', palette='rocket', s=30, alpha=0.8,
+                    hue_order=hue_order)
+    # plt.errorbar(data["y"], data["y"], yerr=[data["lower_err"], data["upper_err"]], fmt="none", ecolor="black", elinewidth=1, capsize=3, alpha=0.3)
+    plt.axline([0, 0], slope=1, c="k", linestyle="--")
+    plt.xlabel("Observatie ${σ}_{b}$ [MPa]", fontsize=14)
+    plt.ylabel(r"Predictie $\hat{σ}_{b}$ [MPa]", fontsize=14)
+    plt.legend(fontsize=10, loc="upper left")
+    plt.show()
+
+    # -----------------------------------------------------------------------
 
 
 if __name__ == "__main__":
