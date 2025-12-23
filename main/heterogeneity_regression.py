@@ -66,15 +66,19 @@ def save_results(res: Dict[str, Any], df: pd.DataFrame, path: Path, log_y: bool 
         df['sig_b_regression'] = res['Homogeen']['fitted_values_all']
     df.to_csv(path.parent / "data_with_regression_output.csv", index=False)
 
-def fit_linear_regression(df: pd.DataFrame, heterogeneity_category: str = "all") -> Dict[str, Any]:
+def fit_linear_regression(df: pd.DataFrame, heterogeneity_category: str = "all", use_HR_as_regressor: bool = True) -> Dict[str, Any]:
 
     if heterogeneity_category != "all":
         df_training = df.loc[df["heterogeneity_category"] == heterogeneity_category].reset_index(drop=True)
     else:
         df_training = df.copy()
 
-    # X = df_training["age_at_investigation"]
-    X = df_training[["age_at_investigation", "HR"]]
+    if use_HR_as_regressor:
+        # X = df_training["age_at_investigation"]
+        X = df_training[["age_at_investigation", "HR"]]
+    else:
+        X = df_training["age_at_investigation"]
+        
     X = sm.add_constant(X)
     y = df_training["target"]
 
@@ -82,14 +86,20 @@ def fit_linear_regression(df: pd.DataFrame, heterogeneity_category: str = "all")
     summary = model.summary()
 
     # prediction_training = model.get_prediction(sm.add_constant(df_training["age_at_investigation"]))
-    prediction_training = model.get_prediction(sm.add_constant(df_training[["age_at_investigation", "HR"]]))
+    if use_HR_as_regressor:
+        prediction_training = model.get_prediction(sm.add_constant(df_training[["age_at_investigation", "HR"]]))
+    else:
+        prediction_training = model.get_prediction(sm.add_constant(df_training["age_at_investigation"]))
     summary_prediction_training = prediction_training.summary_frame(alpha=0.05)
     mean_prediction_training = summary_prediction_training["mean"].values
     ci_prediction_training = summary_prediction_training[["mean_ci_lower", "mean_ci_upper"]].values
     pi_prediction_training = summary_prediction_training[["obs_ci_lower", "obs_ci_upper"]].values
 
     # prediction_all = model.get_prediction(sm.add_constant(df["age_at_investigation"]))
-    prediction_all = model.get_prediction(sm.add_constant(df[["age_at_investigation", "HR"]]))
+    if use_HR_as_regressor:
+        prediction_all = model.get_prediction(sm.add_constant(df[["age_at_investigation", "HR"]]))
+    else:
+        prediction_all = model.get_prediction(sm.add_constant(df["age_at_investigation"]))
     summary_prediction_all = prediction_all.summary_frame(alpha=0.05)
     mean_prediction_all = summary_prediction_all["mean"].values
     ci_prediction_all = summary_prediction_all[["mean_ci_lower", "mean_ci_upper"]].values

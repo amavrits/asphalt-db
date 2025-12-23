@@ -21,11 +21,11 @@ def classify_material_strength(row):
 #construction categories before 1973, between 1973 and 2000 and after 2000
 def categorize_annum(year):
     if year < 1973:
-        return 'before 1973'
+        return 'voor 1973'
     elif 1973 <= year < 2000:
         return '1973-2000'
     else:
-        return 'after 2000'
+        return 'na 2000'
     
 
 #add column of HR-categories
